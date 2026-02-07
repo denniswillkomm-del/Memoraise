@@ -1767,10 +1767,11 @@
         }
       }
 
-      function pushHistory(seq) {
+      function pushHistory(seq, meta = {}) {
         if (!Array.isArray(seq) || seq.length === 0) return;
         const entry = {
           mode,
+          name: meta.name || "",
           length: seq.length,
           createdAt: Date.now(),
           sequence: seq.slice(0, 200),
@@ -1793,7 +1794,9 @@
         history.forEach((entry, idx) => {
           const row = document.createElement("div");
           row.className = "palace-item";
-          const label = `${entry.length} (${entry.mode})`;
+          const label = entry.name
+            ? `${entry.name} · ${entry.length} (${entry.mode})`
+            : `${entry.length} (${entry.mode})`;
           row.innerHTML = `
             <div class="idx">${idx + 1}</div>
             <div>${label}</div>
@@ -2496,7 +2499,7 @@
           updateInputForMode();
           buildKeypad();
           sequence = seq;
-          pushHistory(sequence);
+          pushHistory(sequence, { name: memo.name });
           hidden = false;
           toggleBtn.textContent = "Ausblenden";
           rowScroller.classList.remove("single-line");
