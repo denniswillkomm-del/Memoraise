@@ -91,6 +91,22 @@
         padding: 12px;
       }
 
+      body.mobile-ui .training {
+        padding: 12px;
+      }
+
+      body.mobile-ui .chunk-controls {
+        gap: 6px;
+      }
+
+      body.mobile-ui .chunk-row {
+        gap: 6px;
+      }
+
+      body.mobile-ui .chunk-controls input[type="number"] {
+        width: 72px;
+      }
+
       .app {
         width: min(900px, 100%);
         background: var(--panel-glass);
@@ -330,6 +346,7 @@
       .chunk-controls {
         display: grid;
         gap: 8px;
+        font-size: var(--text-sm);
       }
 
       .chunk-row {
@@ -337,6 +354,14 @@
         flex-wrap: wrap;
         gap: 8px;
         align-items: center;
+      }
+
+      .chunk-controls label {
+        font-size: var(--text-sm);
+      }
+
+      .chunk-controls input[type="number"] {
+        width: 90px;
       }
 
       .keypad-subtext {
@@ -705,6 +730,12 @@
         .stats-actions {
           grid-template-columns: 1fr;
         }
+        .panel {
+          padding: 12px;
+        }
+        .header-actions {
+          gap: 6px;
+        }
       }
 
       @media (max-width: 600px) {
@@ -715,14 +746,30 @@
           width: 100%;
         }
         .dashboard {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          display: flex;
+          overflow-x: auto;
           gap: 8px;
+          padding-bottom: 4px;
         }
         .card {
           padding: 6px 8px;
+          min-width: 110px;
         }
         .card .value {
           font-size: 0.9rem;
+        }
+        .controls label {
+          gap: 4px;
+        }
+        .digits,
+        .attempts-row {
+          gap: 6px;
+        }
+        .chunk-controls input[type="number"] {
+          width: 68px;
+        }
+        .dashboard-title {
+          font-size: 0.7rem;
         }
       }
     </style>
@@ -1351,8 +1398,8 @@
         }
         const end = Math.min(sequence.length, start + chunkSize);
         let palaceText = "";
-        if (palaceEntries[start]) {
-          palaceText = ` | Palast: ${palaceEntries[start].room} – ${palaceEntries[start].place}`;
+        if (palaceEntries[chunkIndex]) {
+          palaceText = ` | Palast: ${palaceEntries[chunkIndex].room} – ${palaceEntries[chunkIndex].place}`;
         }
         chunkHint.textContent = `Paeckchen ${chunkIndex + 1}: Position ${start + 1}–${end}${palaceText}`;
         chunkHint.hidden = false;
