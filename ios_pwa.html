@@ -353,6 +353,22 @@
         font-size: var(--text-sm);
       }
 
+      .chunk-body {
+        display: none;
+        margin-top: 8px;
+      }
+
+      .chunk-body.open {
+        display: block;
+      }
+
+      .chunk-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
       .chunk-row {
         display: flex;
         flex-wrap: wrap;
@@ -854,16 +870,22 @@
               </div>
             </div>
             <div class="chunk-controls">
-              <div class="chunk-row">
-                <label>
-                  Uebungsmodus
-                  <input id="chunkEnabled" type="checkbox" />
-                </label>
-                <label>
-                  Paeckchen-Groesse
-                  <input id="chunkSize" type="number" min="1" value="3" />
-                </label>
-                <button id="nextChunkBtn" class="secondary" type="button">Naechstes Paeckchen</button>
+              <div class="chunk-header">
+                <div class="label">Uebungsmodus</div>
+                <button id="chunkToggleBtn" class="ghost small-button" type="button">Aufklappen</button>
+              </div>
+              <div id="chunkBody" class="chunk-body">
+                <div class="chunk-row">
+                  <label>
+                    Aktiv
+                    <input id="chunkEnabled" type="checkbox" />
+                  </label>
+                  <label>
+                    Paeckchen-Groesse
+                    <input id="chunkSize" type="number" min="1" value="3" />
+                  </label>
+                  <button id="nextChunkBtn" class="secondary" type="button">Naechstes Paeckchen</button>
+                </div>
               </div>
             </div>
             <div class="status info" id="status">Erstelle zuerst eine Ziffernfolge.</div>
@@ -1215,6 +1237,8 @@
       const chunkEnabled = document.getElementById("chunkEnabled");
       const chunkSizeInput = document.getElementById("chunkSize");
       const nextChunkBtn = document.getElementById("nextChunkBtn");
+      const chunkToggleBtn = document.getElementById("chunkToggleBtn");
+      const chunkBody = document.getElementById("chunkBody");
       const palaceSection = document.getElementById("palaceSection");
       const palaceBody = document.getElementById("palaceBody");
       const palaceRoom = document.getElementById("palaceRoom");
@@ -1256,6 +1280,7 @@
       let mobileUi = false;
       let chunkSize = 3;
       let chunkIndex = 0;
+      let chunkOpen = false;
 
       const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
       const cardSuits = [
@@ -1957,6 +1982,12 @@
         chunkIndex += 1;
         renderDigits();
         updateChunkHint();
+      });
+
+      chunkToggleBtn.addEventListener("click", () => {
+        chunkOpen = !chunkOpen;
+        chunkBody.classList.toggle("open", chunkOpen);
+        chunkToggleBtn.textContent = chunkOpen ? "Zuklappen" : "Aufklappen";
       });
 
       assistTabs.forEach((btn) => {
