@@ -1231,10 +1231,6 @@
           </div>
           <div class="palace-list" id="palaceList"></div>
           <div class="palace-io">
-            <div class="palace-io-block">
-              <div class="palace-io-title">Historie (Memorize-Ketten)</div>
-              <div class="palace-list" id="historyList"></div>
-            </div>
             <label>
               Export / Import (JSON)
               <textarea id="palaceJson" placeholder='[{"room":"Wohnzimmer","place":"Sofa"}]'></textarea>
@@ -1244,6 +1240,15 @@
               <button id="palaceImportBtn" class="secondary" type="button">Importieren</button>
             </div>
           </div>
+        </div>
+      </section>
+      <section class="panel" id="historySection">
+        <div class="panel-header">
+          <div class="panel-title">Historie (Memorize-Ketten)</div>
+          <button id="historyToggleBtn" class="ghost small-button" type="button">Zuklappen</button>
+        </div>
+        <div id="historyBody" class="panel-body">
+          <div class="palace-list" id="historyList"></div>
         </div>
       </section>
       <div class="footer">
@@ -1309,6 +1314,9 @@
       const palaceExportBtn = document.getElementById("palaceExportBtn");
       const palaceImportBtn = document.getElementById("palaceImportBtn");
       const historyList = document.getElementById("historyList");
+      const historySection = document.getElementById("historySection");
+      const historyToggleBtn = document.getElementById("historyToggleBtn");
+      const historyBody = document.getElementById("historyBody");
 
       let sequence = [];
       let revealed = [];
@@ -1341,6 +1349,7 @@
       let chunkOpen = false;
       let configOpen = true;
       let history = [];
+      let historyOpen = true;
 
       const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
       const cardSuits = [
@@ -1752,6 +1761,11 @@
       function updateConfigOpen() {
         configBody.classList.toggle("hidden", !configOpen);
         configToggleBtn.textContent = configOpen ? "Zuklappen" : "Aufklappen";
+      }
+
+      function updateHistoryOpen() {
+        historyBody.classList.toggle("hidden", !historyOpen);
+        historyToggleBtn.textContent = historyOpen ? "Zuklappen" : "Aufklappen";
       }
 
       function renderPalaceList() {
@@ -2246,6 +2260,11 @@
         updateConfigOpen();
       });
 
+      historyToggleBtn.addEventListener("click", () => {
+        historyOpen = !historyOpen;
+        updateHistoryOpen();
+      });
+
       palaceExportBtn.addEventListener("click", () => {
         palaceJson.value = JSON.stringify(palaceEntries, null, 2);
       });
@@ -2284,6 +2303,7 @@
         palaceOpen = true;
       }
       updatePalaceOpen();
+      updateHistoryOpen();
       updateConfigOpen();
       updateInputForMode();
       buildKeypad();
