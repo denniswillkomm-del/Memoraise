@@ -158,8 +158,8 @@
       .controls {
         display: grid;
         gap: 12px;
-        grid-template-columns: minmax(200px, 1fr) minmax(180px, 220px) auto;
-        align-items: end;
+        grid-template-columns: 1fr;
+        align-items: start;
       }
 
       .config-grid {
@@ -172,6 +172,21 @@
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      .config-card {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 14px;
+        background: #f7f9fc;
+        border: 1px solid #e2e6ee;
+      }
+
+      .config-card .tab-row,
+      .config-card .button-row,
+      .config-card .config-actions {
         justify-content: flex-start;
       }
 
@@ -836,7 +851,7 @@
       <header>
         <h1>Memoraise: Ziffernfolge trainieren</h1>
         <p>Erstelle eine zufaellige Ziffernfolge, blende sie aus und gib sie Schritt fuer Schritt aus dem Gedaechtnis ein.</p>
-        <p class="footer">Version 1.0.0</p>
+        <p class="footer">Version 1.0.1</p>
         <div class="header-actions">
           <button id="mobileToggleBtn" class="ghost small-button" type="button">Mobile-UI</button>
         </div>
@@ -851,24 +866,29 @@
             </div>
             <div id="configBody" class="panel-body">
               <div class="config-grid">
-                <label>
-                  Laenge der Ziffernfolge
-                  <input id="lengthInput" type="number" min="1" max="200" value="12" />
-                </label>
-                <label>
-                  Modus
-                  <div class="tab-row" id="modeButtons">
-                    <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
-                    <button type="button" class="tab-button" data-mode="binary">Binaer</button>
-                    <button type="button" class="tab-button" data-mode="cards">Karten</button>
+                <div class="config-card">
+                  <label>
+                    Laenge der Ziffernfolge
+                    <input id="lengthInput" type="number" min="1" max="200" value="12" />
+                  </label>
+                </div>
+                <div class="config-card">
+                  <label>
+                    Modus
+                    <div class="tab-row" id="modeButtons">
+                      <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
+                      <button type="button" class="tab-button" data-mode="binary">Binaer</button>
+                      <button type="button" class="tab-button" data-mode="cards">Karten</button>
+                    </div>
+                  </label>
+                </div>
+                <div class="config-card">
+                  <div class="config-actions">
+                    <button id="generateBtn">Ziffernfolge erstellen</button>
+                    <button id="toggleBtn" class="secondary">Ausblenden</button>
+                    <button id="resetBtn" class="ghost">Neu starten</button>
                   </div>
-                </label>
-              </div>
-
-              <div class="config-actions">
-                <button id="generateBtn">Ziffernfolge erstellen</button>
-                <button id="toggleBtn" class="secondary">Ausblenden</button>
-                <button id="resetBtn" class="ghost">Neu starten</button>
+                </div>
               </div>
             </div>
           </section>
@@ -1206,7 +1226,7 @@
           <div class="progress">Anlagemodus Gedaechtnispalast</div>
           <button id="palaceToggleBtn" class="ghost small-button" type="button">Aufklappen</button>
         </div>
-        <div class="palace-body hidden" id="palaceBody">
+        <div class="palace-body" id="palaceBody">
           <div class="palace-form">
             <label>
               Ort (z.B. Raum)
@@ -2274,9 +2294,12 @@
       document.body.dataset.mode = mode;
       loadPalace();
       renderPalaceList();
-      updatePalaceOpen();
       loadHistory();
       renderHistory();
+      if (history.length > 0) {
+        palaceOpen = true;
+      }
+      updatePalaceOpen();
       updateConfigOpen();
       updateInputForMode();
       buildKeypad();
