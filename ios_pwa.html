@@ -670,6 +670,45 @@
         color: var(--muted);
       }
 
+      .memo-form {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        align-items: end;
+      }
+
+      .memo-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .memo-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid #e2e6ee;
+        background: #fff;
+      }
+
+      .memo-item .memo-content {
+        grid-column: 1 / -1;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: #f6f7f9;
+        color: var(--muted);
+        font-size: var(--text-sm);
+        display: none;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .memo-item .memo-content.open {
+        display: block;
+      }
+
       .palace-io textarea {
         width: 100%;
         min-height: 120px;
@@ -1251,6 +1290,28 @@
           <div class="palace-list" id="historyList"></div>
         </div>
       </section>
+      <section class="panel" id="memoSection">
+        <div class="panel-header">
+          <div class="panel-title">Merkliste</div>
+        </div>
+        <div class="panel-body">
+          <div class="memo-form">
+            <label>
+              Name
+              <input id="memoName" type="text" placeholder="z.B. Bankkarte" />
+            </label>
+            <label>
+              Inhalt
+              <input id="memoValue" type="text" placeholder="z.B. 1234 5678 9012 3456" />
+            </label>
+            <div class="config-actions">
+              <button id="memoAddBtn" type="button">Hinzufuegen</button>
+              <button id="memoClearBtn" class="ghost" type="button">Liste leeren</button>
+            </div>
+          </div>
+          <div class="memo-list" id="memoList"></div>
+        </div>
+      </section>
       <div class="footer">
         Hinweis: Privates Hobbyprojekt ohne Gewaehrleistung. Nutzung auf eigene Verantwortung. Der Anbieter uebernimmt keine Haftung fuer Schaeden oder Datenverluste.
       </div>
@@ -1317,6 +1378,11 @@
       const historySection = document.getElementById("historySection");
       const historyToggleBtn = document.getElementById("historyToggleBtn");
       const historyBody = document.getElementById("historyBody");
+      const memoName = document.getElementById("memoName");
+      const memoValue = document.getElementById("memoValue");
+      const memoAddBtn = document.getElementById("memoAddBtn");
+      const memoClearBtn = document.getElementById("memoClearBtn");
+      const memoList = document.getElementById("memoList");
 
       let sequence = [];
       let revealed = [];
@@ -1350,6 +1416,7 @@
       let configOpen = true;
       let history = [];
       let historyOpen = true;
+      let memos = [];
 
       const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
       const cardSuits = [
@@ -1586,9 +1653,28 @@
         }
       }
 
+      function loadMemos() {
+        try {
+          const raw = localStorage.getItem("memoraise_memos");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) memos = parsed;
+        } catch (err) {
+          memos = [];
+        }
+      }
+
       function saveHistory() {
         try {
           localStorage.setItem("memoraise_history", JSON.stringify(history));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function saveMemos() {
+        try {
+          localStorage.setItem("memoraise_memos", JSON.stringify(memos));
         } catch (err) {
           // ignore storage errors
         }
@@ -1628,6 +1714,30 @@
             <button type="button" class="ghost small-button" data-history="${idx}">Laden</button>
           `;
           historyList.appendChild(row);
+        });
+      }
+
+      function renderMemos() {
+        memoList.innerHTML = "";
+        if (memos.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "status info";
+          empty.textContent = "Keine Eintraege.";
+          memoList.appendChild(empty);
+          return;
+        }
+        memos.forEach((memo, idx) => {
+          const row = document.createElement("div");
+          row.className = "memo-item";
+          row.innerHTML = `
+            <div><strong>${memo.name}</strong></div>
+            <div class="button-row">
+              <button type="button" class="ghost small-button" data-memo-toggle="${idx}">Anzeigen</button>
+              <button type="button" class="ghost small-button" data-memo-del="${idx}">Loeschen</button>
+            </div>
+            <div class="memo-content" data-memo-content="${idx}">${memo.value}</div>
+          `;
+          memoList.appendChild(row);
         });
       }
 
@@ -2249,6 +2359,45 @@
         resetTraining();
       });
 
+      memoAddBtn.addEventListener("click", () => {
+        const name = memoName.value.trim();
+        const value = memoValue.value.trim();
+        if (!name || !value) return;
+        memos.unshift({ name, value });
+        memos = memos.slice(0, 50);
+        saveMemos();
+        renderMemos();
+        memoName.value = "";
+        memoValue.value = "";
+        memoName.focus();
+      });
+
+      memoClearBtn.addEventListener("click", () => {
+        memos = [];
+        saveMemos();
+        renderMemos();
+      });
+
+      memoList.addEventListener("click", (event) => {
+        const toggleBtn = event.target.closest("button[data-memo-toggle]");
+        const delBtn = event.target.closest("button[data-memo-del]");
+        if (toggleBtn) {
+          const idx = toggleBtn.dataset.memoToggle;
+          const content = memoList.querySelector(`[data-memo-content="${idx}"]`);
+          if (!content) return;
+          const isOpen = content.classList.toggle("open");
+          toggleBtn.textContent = isOpen ? "Verbergen" : "Anzeigen";
+          return;
+        }
+        if (delBtn) {
+          const idx = Number(delBtn.dataset.memoDel);
+          if (!Number.isFinite(idx)) return;
+          memos.splice(idx, 1);
+          saveMemos();
+          renderMemos();
+        }
+      });
+
       palaceToggleBtn.addEventListener("click", () => {
         palaceOpen = !palaceOpen;
         updatePalaceOpen();
@@ -2299,6 +2448,8 @@
       renderPalaceList();
       loadHistory();
       renderHistory();
+      loadMemos();
+      renderMemos();
       if (history.length > 0) {
         palaceOpen = true;
       }
