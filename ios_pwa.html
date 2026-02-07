@@ -826,23 +826,29 @@
       <div class="layout">
         <div class="content">
           <section class="controls panel">
-            <label>
-              Laenge der Ziffernfolge
-              <input id="lengthInput" type="number" min="1" max="200" value="12" />
-            </label>
-            <label>
-              Modus
-              <div class="tab-row" id="modeButtons">
-                <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
-                <button type="button" class="tab-button" data-mode="binary">Binaer</button>
-                <button type="button" class="tab-button" data-mode="cards">Karten</button>
-              </div>
-            </label>
+            <div class="panel-header">
+              <div class="panel-title">Konfiguration</div>
+              <button id="configToggleBtn" class="ghost small-button" type="button">Zuklappen</button>
+            </div>
+            <div id="configBody" class="panel-body">
+              <label>
+                Laenge der Ziffernfolge
+                <input id="lengthInput" type="number" min="1" max="200" value="12" />
+              </label>
+              <label>
+                Modus
+                <div class="tab-row" id="modeButtons">
+                  <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
+                  <button type="button" class="tab-button" data-mode="binary">Binaer</button>
+                  <button type="button" class="tab-button" data-mode="cards">Karten</button>
+                </div>
+              </label>
 
-            <div class="button-row">
-              <button id="generateBtn">Ziffernfolge erstellen</button>
-              <button id="toggleBtn" class="secondary">Ausblenden</button>
-              <button id="resetBtn" class="ghost">Neu starten</button>
+              <div class="button-row">
+                <button id="generateBtn">Ziffernfolge erstellen</button>
+                <button id="toggleBtn" class="secondary">Ausblenden</button>
+                <button id="resetBtn" class="ghost">Neu starten</button>
+              </div>
             </div>
           </section>
 
@@ -945,7 +951,7 @@
               </div>
             </div>
 
-            <div class="dashboard-group">
+            <div class="dashboard-group total">
               <div class="dashboard-title">Gesamtstatistiken</div>
               <div class="dashboard">
                 <div class="card">
@@ -1201,6 +1207,10 @@
           <div class="palace-list" id="palaceList"></div>
           <div class="palace-io">
             <label>
+              Historie (Memorize-Ketten)
+              <div class="palace-list" id="historyList"></div>
+            </label>
+            <label>
               Export / Import (JSON)
               <textarea id="palaceJson" placeholder='[{"room":"Wohnzimmer","place":"Sofa"}]'></textarea>
             </label>
@@ -1222,6 +1232,8 @@
       const toggleBtn = document.getElementById("toggleBtn");
       const resetBtn = document.getElementById("resetBtn");
       const modeButtons = document.getElementById("modeButtons");
+      const configToggleBtn = document.getElementById("configToggleBtn");
+      const configBody = document.getElementById("configBody");
       const digitsEl = document.getElementById("digits");
       const progressText = document.getElementById("progressText");
       const digitInput = document.getElementById("digitInput");
@@ -1271,6 +1283,7 @@
       const palaceJson = document.getElementById("palaceJson");
       const palaceExportBtn = document.getElementById("palaceExportBtn");
       const palaceImportBtn = document.getElementById("palaceImportBtn");
+      const historyList = document.getElementById("historyList");
 
       let sequence = [];
       let revealed = [];
@@ -1301,6 +1314,8 @@
       let chunkSize = 3;
       let chunkIndex = 0;
       let chunkOpen = false;
+      let configOpen = true;
+      let history = [];
 
       const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
       const cardSuits = [
@@ -1526,6 +1541,62 @@
         }
       }
 
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem("memoraise_history");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) history = parsed;
+        } catch (err) {
+          history = [];
+        }
+      }
+
+      function saveHistory() {
+        try {
+          localStorage.setItem("memoraise_history", JSON.stringify(history));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function pushHistory(seq) {
+        if (!Array.isArray(seq) || seq.length === 0) return;
+        const entry = {
+          mode,
+          length: seq.length,
+          createdAt: Date.now(),
+          sequence: seq.slice(0, 200),
+        };
+        history.unshift(entry);
+        history = history.slice(0, 20);
+        saveHistory();
+        renderHistory();
+      }
+
+      function renderHistory() {
+        historyList.innerHTML = "";
+        if (history.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "status info";
+          empty.textContent = "Keine Historie.";
+          historyList.appendChild(empty);
+          return;
+        }
+        history.forEach((entry, idx) => {
+          const row = document.createElement("div");
+          row.className = "palace-item";
+          const label = `${entry.length} (${entry.mode})`;
+          row.innerHTML = `
+            <div class="idx">${idx + 1}</div>
+            <div>${label}</div>
+            <div>${new Date(entry.createdAt).toLocaleDateString()}</div>
+            <button type="button" class="ghost small-button" data-history="${idx}">Laden</button>
+          `;
+          historyList.appendChild(row);
+        });
+      }
+
       function loadBestTimes() {
         try {
           const raw = localStorage.getItem("memoraise_best_times");
@@ -1653,6 +1724,11 @@
         palaceToggleBtn.textContent = palaceOpen ? "Zuklappen" : "Aufklappen";
       }
 
+      function updateConfigOpen() {
+        configBody.classList.toggle("hidden", !configOpen);
+        configToggleBtn.textContent = configOpen ? "Zuklappen" : "Aufklappen";
+      }
+
       function renderPalaceList() {
         palaceList.innerHTML = "";
         if (palaceEntries.length === 0) {
@@ -1773,6 +1849,7 @@
       generateBtn.addEventListener("click", () => {
         const length = Math.max(1, Math.min(200, Number(lengthInput.value) || 1));
         sequence = buildSequence(length);
+        pushHistory(sequence);
         totals.runs += 1;
         totals.digits += length;
         saveTotals();
@@ -1809,6 +1886,7 @@
         }
         const length = Math.max(1, Math.min(200, Number(lengthInput.value) || 1));
         sequence = buildSequence(length);
+        pushHistory(sequence);
         totals.runs += 1;
         totals.digits += length;
         saveTotals();
@@ -2119,10 +2197,28 @@
         }
       });
 
+      historyList.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-history]");
+        if (!btn) return;
+        const idx = Number(btn.dataset.history);
+        const entry = history[idx];
+        if (!entry) return;
+        sequence = entry.sequence.slice();
+        hidden = false;
+        toggleBtn.textContent = "Ausblenden";
+        rowScroller.classList.remove("single-line");
+        resetTraining();
+      });
+
       palaceToggleBtn.addEventListener("click", () => {
         palaceOpen = !palaceOpen;
         updatePalaceOpen();
         savePalace();
+      });
+
+      configToggleBtn.addEventListener("click", () => {
+        configOpen = !configOpen;
+        updateConfigOpen();
       });
 
       palaceExportBtn.addEventListener("click", () => {
@@ -2158,6 +2254,9 @@
       loadPalace();
       renderPalaceList();
       updatePalaceOpen();
+      loadHistory();
+      renderHistory();
+      updateConfigOpen();
       updateInputForMode();
       buildKeypad();
       updateSupportHint();
