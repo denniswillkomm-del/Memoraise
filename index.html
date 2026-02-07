@@ -912,7 +912,7 @@
       <header>
         <h1>Memoraise: Ziffernfolge trainieren</h1>
         <p>Erstelle eine zufaellige Ziffernfolge, blende sie aus und gib sie Schritt fuer Schritt aus dem Gedaechtnis ein.</p>
-        <p class="footer">Version 1.0.2</p>
+        <p class="footer">Version 1.0.3</p>
         <div class="header-actions">
           <button id="mobileToggleBtn" class="ghost small-button" type="button">Mobile-UI</button>
         </div>
@@ -2478,23 +2478,13 @@
           const memo = memos[idx];
           if (!memo) return;
           const raw = String(memo.value || "");
-          const compact = raw.replace(/[\s-]/g, "");
           const onlyDigits = raw.replace(/\D/g, "");
-          let nextMode = "decimal";
-          let seq = [];
-          if (/^[01]+$/.test(compact)) {
-            nextMode = "binary";
-            seq = compact.split("");
-          } else if (onlyDigits.length > 0) {
-            nextMode = "decimal";
-            seq = onlyDigits.split("");
-          } else {
-            return;
-          }
+          if (!onlyDigits) return;
+          const seq = onlyDigits.split("");
           modeButtons.querySelectorAll("button").forEach((b) =>
-            b.classList.toggle("active", b.dataset.mode === nextMode)
+            b.classList.toggle("active", b.dataset.mode === "decimal")
           );
-          mode = nextMode;
+          mode = "decimal";
           document.body.dataset.mode = mode;
           updateInputForMode();
           buildKeypad();
