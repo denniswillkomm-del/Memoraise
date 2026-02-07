@@ -1,0 +1,1871 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memoraise - Ziffernfolge</title>
+    <style>
+      :root {
+        --bg: #f2f4f7;
+        --ink: #0b0f1a;
+        --muted: #5a6473;
+        --accent: #0a84ff;
+        --accent-2: #5ac8fa;
+        --ok: #0a84ff;
+        --bad: #ff453a;
+        --panel: #ffffff;
+        --panel-glass: rgba(255, 255, 255, 0.72);
+        --shadow: rgba(17, 24, 39, 0.12);
+        --radius: 20px;
+        --ring: rgba(10, 132, 255, 0.18);
+        --cell-size: 40px;
+        --cell-gap: 8px;
+        --text-xl: 1.35rem;
+        --text-lg: 1.05rem;
+        --text-md: 0.95rem;
+        --text-sm: 0.8rem;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "SF Pro Display", "SF Pro Text", "Segoe UI", "Helvetica Neue", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 20% 10%, #e1ebff, transparent 45%),
+          radial-gradient(circle at 80% 20%, #d9f0ff, transparent 40%),
+          linear-gradient(180deg, #fbfbfd 0%, var(--bg) 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 16px;
+      }
+
+      .app {
+        width: min(900px, 100%);
+        background: var(--panel-glass);
+        border-radius: var(--radius);
+        box-shadow: 0 24px 60px var(--shadow);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(18px);
+        padding: 28px;
+        display: grid;
+        gap: 24px;
+      }
+
+      header {
+        display: grid;
+        gap: 6px;
+      }
+
+      h1 {
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .stats {
+        display: grid;
+        gap: 12px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(200px, 1fr) minmax(180px, 220px) auto;
+        align-items: end;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-weight: 600;
+      }
+
+      input[type="number"],
+      input[type="text"],
+      select {
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #d7dbe3;
+        font-size: 1rem;
+        background: #f6f7f9;
+        outline: none;
+        transition: border 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input:focus {
+        border-color: #9dbdf7;
+        box-shadow: 0 0 0 4px var(--ring);
+      }
+
+      .button-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      button {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        background: linear-gradient(135deg, #0a66d9 0%, #1e8bff 100%);
+        color: #f7fbff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 14px 24px rgba(10, 132, 255, 0.28);
+      }
+
+      button.secondary {
+        background: #f0f2f6;
+        color: #1a2233;
+        box-shadow: none;
+        border: 1px solid #d7dbe3;
+      }
+
+      button.ghost {
+        background: transparent;
+        color: var(--ink);
+        border: 1px solid #d7dbe3;
+        box-shadow: none;
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      .sequence {
+        display: grid;
+        gap: 12px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid #e2e6ee;
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 14px 30px rgba(17, 24, 39, 0.06);
+      }
+
+      .panel-title {
+        font-size: var(--text-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .digits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--cell-gap);
+        font-size: clamp(1.2rem, 3vw, 1.8rem);
+        letter-spacing: 0.1em;
+        font-weight: 600;
+      }
+
+      .row-scroller {
+        display: grid;
+        gap: 8px;
+      }
+
+      .row-scroller.single-line {
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+      }
+
+      .row-scroller.single-line .digits,
+      .row-scroller.single-line .attempts-row {
+        flex-wrap: nowrap;
+      }
+
+      .digit {
+        width: var(--cell-size);
+        height: var(--cell-size);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border-radius: 10px;
+        background: #f3f5f8;
+        color: #2a3446;
+        flex: 0 0 var(--cell-size);
+      }
+
+      body[data-mode="cards"] .digit,
+      body[data-mode="cards"] .attempt {
+        width: 52px;
+        height: 52px;
+        font-size: clamp(1.3rem, 3vw, 2rem);
+      }
+
+      .card-red {
+        color: #b4232c !important;
+      }
+
+      .digit.revealed {
+        background: #e5f1ff;
+        color: #1c3f7a;
+      }
+
+      .training {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid #e2e6ee;
+        background: #fafbfc;
+      }
+
+      .input-row {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr);
+        align-items: start;
+      }
+
+      .keypad-panel {
+        display: grid;
+        gap: 8px;
+      }
+
+      .keypad-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .support-hint {
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: #f2f4f7;
+        color: var(--muted);
+        font-size: var(--text-sm);
+      }
+
+      .support-hint strong {
+        color: var(--ink);
+      }
+
+      .keypad-subtext {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .keypad {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(56px, 1fr));
+      }
+
+      .keypad.cards {
+        grid-template-columns: repeat(5, minmax(48px, 1fr));
+      }
+
+      .keypad.hidden {
+        display: none;
+      }
+
+      .keypad button {
+        padding: 12px 0;
+        border-radius: 14px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background: #f0f2f6;
+        color: #1a2233;
+        border: 1px solid #d7dbe3;
+        box-shadow: none;
+      }
+
+      .keypad button.primary {
+        background: linear-gradient(135deg, #0a66d9 0%, #1e8bff 100%);
+        color: #f7fbff;
+        border: none;
+        box-shadow: 0 10px 18px rgba(10, 132, 255, 0.25);
+      }
+
+      .attempts {
+        display: grid;
+        gap: 8px;
+      }
+
+      .attempts-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--cell-gap);
+      }
+
+      .attempt {
+        width: var(--cell-size);
+        height: var(--cell-size);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: clamp(1.2rem, 3vw, 1.8rem);
+        letter-spacing: 0.1em;
+        border: none;
+        flex: 0 0 var(--cell-size);
+      }
+
+      .attempt.placeholder {
+        background: transparent;
+        border: 1px dashed #d7dbe3;
+        color: transparent;
+      }
+
+      .attempt.ok {
+        background: #e6f6ed;
+        color: #1f6b3d;
+      }
+
+      .attempt.bad {
+        background: #fde9e9;
+        color: #7a1f1f;
+      }
+
+      .status {
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+      }
+
+      .status.ok {
+        background: #e5f1ff;
+        color: #1c3f7a;
+      }
+
+      .status.bad {
+        background: #fde9e9;
+        color: #7a1f1f;
+      }
+
+      .status.info {
+        background: #f2f4f7;
+        color: #3f4a5d;
+      }
+
+      .progress {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .dashboard {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+
+      .dashboard-group {
+        display: grid;
+        gap: 12px;
+      }
+
+      .dashboard-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .card {
+        padding: 8px 10px;
+        border-radius: 16px;
+        background: var(--panel);
+        border: 1px solid #e2e6ee;
+        box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+        display: grid;
+        gap: 6px;
+      }
+
+      .card .label {
+        font-size: 0.68rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .card .value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .stats-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .help-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        font-size: var(--text-sm);
+        border-radius: 999px;
+        border: 1px solid #d7dbe3;
+        background: #f6f7f9;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .help-toggle svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .helper {
+        margin-top: 8px;
+        border: 1px solid #e2e6ee;
+        border-radius: 12px;
+        background: #fafbfc;
+        padding: 12px;
+        max-height: 320px;
+        overflow: auto;
+      }
+
+      .helper table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--text-sm);
+      }
+
+      .helper.cards th:first-child,
+      .helper.cards td:first-child {
+        text-align: right;
+        width: 64px;
+        padding-right: 8px;
+        white-space: nowrap;
+      }
+
+      .helper th,
+      .helper td {
+        border-bottom: 1px solid #e2e6ee;
+        text-align: left;
+        padding: 4px 6px;
+      }
+
+      .helper th {
+        position: sticky;
+        top: 0;
+        background: #f2f4f7;
+      }
+
+      .section-hidden {
+        display: none;
+      }
+
+      .palace {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid #e2e6ee;
+        background: #fff;
+      }
+
+      .palace-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .palace-body.hidden {
+        display: none;
+      }
+
+      .palace-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .palace-io {
+        display: grid;
+        gap: 8px;
+      }
+
+      .palace-io textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #d7dbe3;
+        background: #f6f7f9;
+        font-size: var(--text-sm);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+
+      .tab-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .tab-button {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid #d7dbe3;
+        background: #eef1f6;
+        color: #1f2a3d;
+        font-size: var(--text-sm);
+        cursor: pointer;
+      }
+
+      .tab-button.active {
+        background: #dce9ff;
+        color: #0b0f1a;
+        border-color: transparent;
+      }
+
+      .assist-panel {
+        display: none;
+      }
+
+      .assist-panel.active {
+        display: block;
+      }
+
+      .assist-body {
+        display: none;
+        margin-top: 8px;
+      }
+
+      .assist-body.open {
+        display: block;
+      }
+
+      .assist-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .palace-form {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        align-items: end;
+      }
+
+      .palace-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .palace-item {
+        display: grid;
+        grid-template-columns: 36px 1fr 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid #e2e6ee;
+        background: #fff;
+        font-size: 0.9rem;
+      }
+
+      .palace-item .idx {
+        text-align: right;
+        color: var(--muted);
+      }
+      .small-button {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+        border-radius: 999px;
+      }
+
+      .best-times {
+        display: grid;
+        gap: 4px;
+        margin: 0;
+        padding-left: 16px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .footer {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 700px) {
+        .input-row {
+          grid-template-columns: 1fr;
+        }
+        .controls {
+          grid-template-columns: 1fr;
+        }
+        .button-row {
+          justify-content: flex-start;
+        }
+        .dashboard {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .stats-actions {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .button-row {
+          flex-direction: column;
+        }
+        button {
+          width: 100%;
+        }
+        .dashboard {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+        .card {
+          padding: 6px 8px;
+        }
+        .card .value {
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Memoraise: Ziffernfolge trainieren</h1>
+        <p>Erstelle eine zufaellige Ziffernfolge, blende sie aus und gib sie Schritt fuer Schritt aus dem Gedaechtnis ein.</p>
+      </header>
+
+      <div class="layout">
+        <div class="content">
+          <section class="controls panel">
+            <label>
+              Laenge der Ziffernfolge
+              <input id="lengthInput" type="number" min="1" max="200" value="12" />
+            </label>
+            <label>
+              Modus
+              <div class="tab-row" id="modeButtons">
+                <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
+                <button type="button" class="tab-button" data-mode="binary">Binaer</button>
+                <button type="button" class="tab-button" data-mode="cards">Karten</button>
+              </div>
+            </label>
+
+            <div class="button-row">
+              <button id="generateBtn">Ziffernfolge erstellen</button>
+              <button id="toggleBtn" class="secondary">Ausblenden</button>
+              <button id="resetBtn" class="ghost">Neu starten</button>
+            </div>
+          </section>
+
+          <section class="sequence panel">
+            <div class="progress" id="progressText">Noch keine Ziffernfolge.</div>
+            <div class="row-scroller" id="rowScroller">
+              <div class="digits" id="digits"></div>
+              <div class="attempts-row" id="attemptsRow"></div>
+            </div>
+          </section>
+
+          <section class="training panel">
+            <div class="input-row">
+              <label>
+                Naechste Eingabe
+                <div id="supportHint" class="support-hint" hidden></div>
+                <input id="digitInput" type="text" inputmode="numeric" maxlength="3" placeholder="0-9" />
+              </label>
+              <div class="keypad-panel">
+                <div class="keypad-header">
+                  <span>Tastenfeld</span>
+                  <div class="button-row">
+                    <button id="supportToggleBtn" class="ghost small-button" type="button">Gedaechtnispalast</button>
+                    <button id="toggleKeypadBtn" class="ghost small-button" type="button">Ausblenden</button>
+                  </div>
+                </div>
+                <div class="keypad-subtext" id="keypadHint">Zahlen eingeben</div>
+                <div class="keypad" id="keypad" aria-label="Tastenfeld">
+                  <button type="button" data-digit="1">1</button>
+                  <button type="button" data-digit="2">2</button>
+                  <button type="button" data-digit="3">3</button>
+                  <button type="button" data-digit="4">4</button>
+                  <button type="button" data-digit="5">5</button>
+                  <button type="button" data-digit="6">6</button>
+                  <button type="button" data-digit="7">7</button>
+                  <button type="button" data-digit="8">8</button>
+                  <button type="button" data-digit="9">9</button>
+                  <button type="button" data-action="clear">C</button>
+                  <button type="button" data-digit="0">0</button>
+                  <button type="button" class="primary" data-action="back">←</button>
+                </div>
+              </div>
+            </div>
+            <div class="status info" id="status">Erstelle zuerst eine Ziffernfolge.</div>
+          </section>
+
+          <div class="footer">Tipp: Sobald du eine Ziffer eingibst, wird sie geprueft und die korrekte Ziffer an dieser Position aufgedeckt.</div>
+        </div>
+
+        <aside class="stats">
+          <section class="dashboard panel" aria-label="Dashboard">
+            <div class="dashboard-group">
+              <div class="dashboard-title">Aktueller Durchlauf</div>
+              <div class="dashboard">
+                <div class="card">
+                  <div class="label">Laenge</div>
+                  <div class="value" id="statLength">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Richtig</div>
+                  <div class="value" id="statCorrect">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Falsch</div>
+                  <div class="value" id="statWrong">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Streak</div>
+                  <div class="value" id="statStreak">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Fortschritt</div>
+                  <div class="value" id="statProgress">0%</div>
+                </div>
+                <div class="card">
+                  <div class="label">Merken-Zeit</div>
+                  <div class="value" id="statMemTime">--</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-group">
+              <div class="dashboard-title">Gesamtstatistiken</div>
+              <div class="dashboard">
+                <div class="card">
+                  <div class="label">Durchlaeufe</div>
+                  <div class="value" id="totalRuns">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Ziffern</div>
+                  <div class="value" id="totalDigits">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Richtig</div>
+                  <div class="value" id="totalCorrect">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Falsch</div>
+                  <div class="value" id="totalWrong">0</div>
+                </div>
+                <div class="card">
+                  <div class="label">Trefferquote</div>
+                  <div class="value" id="totalAccuracy">0%</div>
+                </div>
+              </div>
+            </div>
+            <div class="stats-actions">
+              <div class="card">
+                <div class="label">Bestzeiten (Laenge)</div>
+                <div class="value" id="bestTimesLabel">--</div>
+                <ul class="best-times" id="bestTimesList"></ul>
+              </div>
+              <div class="card">
+                <div class="assist-header">
+                  <div class="label">Hilfen</div>
+                  <button id="assistToggleBtn" class="ghost small-button" type="button">Aufklappen</button>
+                </div>
+                <div class="tab-row">
+                  <button class="tab-button active" data-assist-tab="decimal">Dezimal</button>
+                  <button class="tab-button" data-assist-tab="binary">Binaer</button>
+                  <button class="tab-button" data-assist-tab="cards">Karten</button>
+                </div>
+                <div id="assistBody" class="assist-body">
+                  <div class="assist-panel active" data-assist-panel="decimal">
+                    <div class="helper">
+                      <table>
+                        <thead>
+                        <tr>
+                          <th>Zahl</th>
+                          <th>Begriff</th>
+                          <th>Alternative</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>0</td><td>Sau</td><td></td></tr>
+                        <tr><td>1</td><td>Tee</td><td></td></tr>
+                        <tr><td>2</td><td>Noah</td><td></td></tr>
+                        <tr><td>3</td><td>Mai</td><td></td></tr>
+                        <tr><td>4</td><td>Reh</td><td></td></tr>
+                        <tr><td>5</td><td>Lee</td><td></td></tr>
+                        <tr><td>6</td><td>Schuhe</td><td></td></tr>
+                        <tr><td>7</td><td>Kuh</td><td></td></tr>
+                        <tr><td>8</td><td>Fee</td><td></td></tr>
+                        <tr><td>9</td><td>Po</td><td></td></tr>
+                        <tr><td>10</td><td>Tasse</td><td>Tussi</td></tr>
+                        <tr><td>11</td><td>Titte</td><td>Tod, Tat</td></tr>
+                        <tr><td>12</td><td>Tanne</td><td>Tonne</td></tr>
+                        <tr><td>13</td><td>Team</td><td>Dame</td></tr>
+                        <tr><td>14</td><td>Teer</td><td>Tor</td></tr>
+                        <tr><td>15</td><td>Tal</td><td></td></tr>
+                        <tr><td>16</td><td>Tasche</td><td>Tisch</td></tr>
+                        <tr><td>17</td><td>Theke</td><td>Tick</td></tr>
+                        <tr><td>18</td><td>Taufe</td><td>Tiffy</td></tr>
+                        <tr><td>19</td><td>Top</td><td>Dope, Taube</td></tr>
+                        <tr><td>20</td><td>Nase</td><td></td></tr>
+                        <tr><td>21</td><td>Niete</td><td>Nutte</td></tr>
+                        <tr><td>22</td><td>Nonne</td><td></td></tr>
+                        <tr><td>23</td><td>Name</td><td></td></tr>
+                        <tr><td>24</td><td>Niere</td><td></td></tr>
+                        <tr><td>25</td><td>Nil</td><td></td></tr>
+                        <tr><td>26</td><td>Nische</td><td></td></tr>
+                        <tr><td>27</td><td>Nike</td><td></td></tr>
+                        <tr><td>28</td><td>Nerfe</td><td></td></tr>
+                        <tr><td>29</td><td>Neubau</td><td></td></tr>
+                        <tr><td>30</td><td>Moos</td><td></td></tr>
+                        <tr><td>31</td><td>Matte</td><td>Miete</td></tr>
+                        <tr><td>32</td><td>Mann</td><td></td></tr>
+                        <tr><td>33</td><td>Mama</td><td></td></tr>
+                        <tr><td>34</td><td>Meer</td><td></td></tr>
+                        <tr><td>35</td><td>Mehl</td><td></td></tr>
+                        <tr><td>36</td><td>Masche</td><td></td></tr>
+                        <tr><td>37</td><td>Mac (Donalds)</td><td></td></tr>
+                        <tr><td>38</td><td>Mafia</td><td></td></tr>
+                        <tr><td>39</td><td>Mappe</td><td></td></tr>
+                        <tr><td>40</td><td>Rose</td><td></td></tr>
+                        <tr><td>41</td><td>Ratte</td><td></td></tr>
+                        <tr><td>42</td><td>Ran</td><td></td></tr>
+                        <tr><td>43</td><td>Rum</td><td></td></tr>
+                        <tr><td>44</td><td>Rohr</td><td></td></tr>
+                        <tr><td>45</td><td>Rolle</td><td></td></tr>
+                        <tr><td>46</td><td>Rauch</td><td></td></tr>
+                        <tr><td>47</td><td>Rock</td><td></td></tr>
+                        <tr><td>48</td><td>Reif</td><td>Riff</td></tr>
+                        <tr><td>49</td><td>Raupe</td><td></td></tr>
+                        <tr><td>50</td><td>Los</td><td></td></tr>
+                        <tr><td>51</td><td>Latte</td><td></td></tr>
+                        <tr><td>52</td><td>Linie</td><td>Luna</td></tr>
+                        <tr><td>53</td><td>Leim</td><td></td></tr>
+                        <tr><td>54</td><td>Leier</td><td></td></tr>
+                        <tr><td>55</td><td>Lila (Launebär)</td><td></td></tr>
+                        <tr><td>56</td><td>Loch</td><td>Lauch, Lasche</td></tr>
+                        <tr><td>57</td><td>Lack</td><td></td></tr>
+                        <tr><td>58</td><td>Lava</td><td></td></tr>
+                        <tr><td>59</td><td>Lupe</td><td></td></tr>
+                        <tr><td>60</td><td>Schuss</td><td></td></tr>
+                        <tr><td>61</td><td>Schotte</td><td></td></tr>
+                        <tr><td>62</td><td>Scheune</td><td></td></tr>
+                        <tr><td>63</td><td>Schaum</td><td></td></tr>
+                        <tr><td>64</td><td>Schere</td><td></td></tr>
+                        <tr><td>65</td><td>Schal</td><td></td></tr>
+                        <tr><td>66</td><td>Schach</td><td></td></tr>
+                        <tr><td>67</td><td>Scheck</td><td>Schoko</td></tr>
+                        <tr><td>68</td><td>Schaf</td><td></td></tr>
+                        <tr><td>69</td><td>Schippe</td><td></td></tr>
+                        <tr><td>70</td><td>Kuss</td><td></td></tr>
+                        <tr><td>71</td><td>Kette</td><td></td></tr>
+                        <tr><td>72</td><td>Kanne</td><td></td></tr>
+                        <tr><td>73</td><td>Kamm</td><td></td></tr>
+                        <tr><td>74</td><td>Karre</td><td></td></tr>
+                        <tr><td>75</td><td>Keule</td><td></td></tr>
+                        <tr><td>76</td><td>Koch</td><td></td></tr>
+                        <tr><td>77</td><td>Kacke</td><td></td></tr>
+                        <tr><td>78</td><td>Kaffee</td><td></td></tr>
+                        <tr><td>79</td><td>Kappe</td><td></td></tr>
+                        <tr><td>80</td><td>Fass</td><td></td></tr>
+                        <tr><td>81</td><td>Fett</td><td></td></tr>
+                        <tr><td>82</td><td>Fahne</td><td></td></tr>
+                        <tr><td>83</td><td>WM</td><td></td></tr>
+                        <tr><td>84</td><td>Fähre</td><td></td></tr>
+                        <tr><td>85</td><td>Falle</td><td></td></tr>
+                        <tr><td>86</td><td>Fisch</td><td></td></tr>
+                        <tr><td>87</td><td>Waage</td><td></td></tr>
+                        <tr><td>88</td><td>Waffe</td><td></td></tr>
+                        <tr><td>89</td><td>Wabe</td><td></td></tr>
+                        <tr><td>90</td><td>Bus</td><td></td></tr>
+                        <tr><td>91</td><td>Bett</td><td></td></tr>
+                        <tr><td>92</td><td>Bahn</td><td></td></tr>
+                        <tr><td>93</td><td>Baum</td><td></td></tr>
+                        <tr><td>94</td><td>Bier</td><td></td></tr>
+                        <tr><td>95</td><td>Ball</td><td></td></tr>
+                        <tr><td>96</td><td>Buch</td><td></td></tr>
+                        <tr><td>97</td><td>Backe</td><td></td></tr>
+                        <tr><td>98</td><td>Bifi</td><td></td></tr>
+                        <tr><td>99</td><td>Papa</td><td></td></tr>
+                        <tr><td>00</td><td>Soße</td><td></td></tr>
+                        <tr><td>01</td><td>Seide</td><td></td></tr>
+                        <tr><td>02</td><td>Sohn</td><td></td></tr>
+                        <tr><td>03</td><td>Sunno</td><td></td></tr>
+                        <tr><td>04</td><td>Säure</td><td></td></tr>
+                        <tr><td>05</td><td>Säule</td><td></td></tr>
+                        <tr><td>06</td><td>Seuche</td><td></td></tr>
+                        <tr><td>07</td><td>Socke</td><td></td></tr>
+                        <tr><td>08</td><td>Seife</td><td></td></tr>
+                        <tr><td>09</td><td>Suppe</td><td></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                  </div>
+                  <div class="assist-panel" data-assist-panel="binary">
+                    <div class="helper">
+                      <table>
+                        <thead>
+                        <tr>
+                          <th>Zahl</th>
+                          <th>Binaer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>0</td><td>000</td></tr>
+                        <tr><td>1</td><td>001</td></tr>
+                        <tr><td>2</td><td>010</td></tr>
+                        <tr><td>3</td><td>011</td></tr>
+                        <tr><td>4</td><td>100</td></tr>
+                        <tr><td>5</td><td>101</td></tr>
+                        <tr><td>6</td><td>110</td></tr>
+                        <tr><td>7</td><td>111</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                  </div>
+                  <div class="assist-panel" data-assist-panel="cards">
+                    <div class="helper cards">
+                      <table>
+                        <thead>
+                        <tr>
+                          <th></th>
+                          <th>Kreuz</th>
+                          <th>Pik</th>
+                          <th>Herz</th>
+                          <th>Karo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>2</td><td>Zaun</td><td>Panda</td><td>Hand</td><td>Kanu</td></tr>
+                        <tr><td>3</td><td>Zimt</td><td>Puma</td><td>Hammer</td><td>Kammer</td></tr>
+                        <tr><td>4</td><td>Zorro</td><td>Paar</td><td>Haar</td><td>Krater</td></tr>
+                        <tr><td>5</td><td>Zelle</td><td>Pol</td><td>Halle</td><td>Kohle</td></tr>
+                        <tr><td>6</td><td>Zuschauer</td><td>Pasch</td><td>Hasch</td><td>Kachel</td></tr>
+                        <tr><td>7</td><td>Zecke</td><td>Piekser</td><td>Hacke</td><td>Keks</td></tr>
+                        <tr><td>8</td><td>Zofe</td><td>Puff</td><td>Hof</td><td>Kiwi</td></tr>
+                        <tr><td>9</td><td>Zauberer</td><td>Pippi</td><td>Haube</td><td>Kippe</td></tr>
+                        <tr><td>10</td><td>Zaster</td><td>Paß</td><td>Hase</td><td>Kasse</td></tr>
+                        <tr><td>Bube</td><td>Einstein</td><td>Pele</td><td>Newton</td><td>Michael Schumacher</td></tr>
+                        <tr><td>Dame</td><td>Judith</td><td>Tina Turner</td><td>Lady Di</td><td>Steffi Graf</td></tr>
+                        <tr><td>König</td><td>Micha</td><td>Michael Jackson</td><td>Prinz Charles</td><td>Boris Becker</td></tr>
+                        <tr><td>As</td><td>Zitteraal</td><td>Pute</td><td>Hut</td><td>Kater</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  </div>
+                </div>
+              </div>
+              <button id="resetStatsBtn" class="ghost small-button" type="button">Statistiken zuruecksetzen</button>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <section class="palace panel" id="palaceSection">
+        <div class="palace-header">
+          <div class="progress">Anlagemodus Gedaechtnispalast</div>
+          <button id="palaceToggleBtn" class="ghost small-button" type="button">Aufklappen</button>
+        </div>
+        <div class="palace-body hidden" id="palaceBody">
+          <div class="palace-form">
+            <label>
+              Ort (z.B. Raum)
+              <input id="palaceRoom" type="text" placeholder="Raum" />
+            </label>
+            <label>
+              Platz (z.B. Schrank)
+              <input id="palacePlace" type="text" placeholder="Platz" />
+            </label>
+            <label>
+              Einfuegen bei (optional)
+              <input id="palacePos" type="number" min="1" placeholder="Position" />
+            </label>
+            <div class="button-row">
+              <button id="palaceAddBtn" type="button">Eintrag hinzufuegen</button>
+              <button id="palaceClearBtn" class="ghost" type="button">Liste leeren</button>
+            </div>
+          </div>
+          <div class="palace-list" id="palaceList"></div>
+          <div class="palace-io">
+            <label>
+              Export / Import (JSON)
+              <textarea id="palaceJson" placeholder='[{"room":"Wohnzimmer","place":"Sofa"}]'></textarea>
+            </label>
+            <div class="palace-actions">
+              <button id="palaceExportBtn" type="button">Exportieren</button>
+              <button id="palaceImportBtn" class="secondary" type="button">Importieren</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const lengthInput = document.getElementById("lengthInput");
+      const generateBtn = document.getElementById("generateBtn");
+      const toggleBtn = document.getElementById("toggleBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const modeButtons = document.getElementById("modeButtons");
+      const digitsEl = document.getElementById("digits");
+      const progressText = document.getElementById("progressText");
+      const digitInput = document.getElementById("digitInput");
+      const statusEl = document.getElementById("status");
+      const statLength = document.getElementById("statLength");
+      const statCorrect = document.getElementById("statCorrect");
+      const statWrong = document.getElementById("statWrong");
+      const statStreak = document.getElementById("statStreak");
+      const statProgress = document.getElementById("statProgress");
+      const statMemTime = document.getElementById("statMemTime");
+      const totalRuns = document.getElementById("totalRuns");
+      const totalDigits = document.getElementById("totalDigits");
+      const totalCorrect = document.getElementById("totalCorrect");
+      const totalWrong = document.getElementById("totalWrong");
+      const totalAccuracy = document.getElementById("totalAccuracy");
+      const bestTimesLabel = document.getElementById("bestTimesLabel");
+      const bestTimesList = document.getElementById("bestTimesList");
+      const attemptsRow = document.getElementById("attemptsRow");
+      const keypad = document.getElementById("keypad");
+      const keypadHint = document.getElementById("keypadHint");
+      const rowScroller = document.getElementById("rowScroller");
+      const resetStatsBtn = document.getElementById("resetStatsBtn");
+      const toggleKeypadBtn = document.getElementById("toggleKeypadBtn");
+      const supportToggleBtn = document.getElementById("supportToggleBtn");
+      const supportHint = document.getElementById("supportHint");
+      const assistTabs = document.querySelectorAll("[data-assist-tab]");
+      const assistPanels = document.querySelectorAll("[data-assist-panel]");
+      const assistToggleBtn = document.getElementById("assistToggleBtn");
+      const assistBody = document.getElementById("assistBody");
+      const palaceSection = document.getElementById("palaceSection");
+      const palaceBody = document.getElementById("palaceBody");
+      const palaceRoom = document.getElementById("palaceRoom");
+      const palacePlace = document.getElementById("palacePlace");
+      const palacePos = document.getElementById("palacePos");
+      const palaceAddBtn = document.getElementById("palaceAddBtn");
+      const palaceClearBtn = document.getElementById("palaceClearBtn");
+      const palaceList = document.getElementById("palaceList");
+      const palaceToggleBtn = document.getElementById("palaceToggleBtn");
+      const palaceJson = document.getElementById("palaceJson");
+      const palaceExportBtn = document.getElementById("palaceExportBtn");
+      const palaceImportBtn = document.getElementById("palaceImportBtn");
+
+      let sequence = [];
+      let revealed = [];
+      let currentIndex = 0;
+      let hidden = false;
+      let correctCount = 0;
+      let wrongCount = 0;
+      let streak = 0;
+      let attempts = [];
+      let viewStart = null;
+      let lastViewDurationMs = null;
+      let keypadHidden = true;
+      let mode = "decimal";
+      let cardSelection = { rank: null, suit: null };
+      let totals = {
+        runs: 0,
+        digits: 0,
+        correct: 0,
+        wrong: 0,
+      };
+      let bestTimes = {};
+      let palaceEntries = [];
+      let palaceLastRoom = "";
+      let palaceOpen = false;
+      let supportEnabled = false;
+      let assistOpen = false;
+
+      const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+      const cardSuits = [
+        { sym: "♠", key: "S" },
+        { sym: "♥", key: "H" },
+        { sym: "♦", key: "D" },
+        { sym: "♣", key: "C" },
+      ];
+
+      function cardDeck() {
+        const deck = [];
+        cardRanks.forEach((rank) => {
+          cardSuits.forEach((suit) => {
+            deck.push(`${rank}${suit.sym}`);
+          });
+        });
+        return deck;
+      }
+
+      function buildSequence(length) {
+        if (mode === "binary") {
+          return Array.from({ length }, () => String(Math.floor(Math.random() * 2)));
+        }
+        if (mode === "cards") {
+          const deck = cardDeck();
+          return Array.from({ length }, () => deck[Math.floor(Math.random() * deck.length)]);
+        }
+        return Array.from({ length }, () => String(Math.floor(Math.random() * 10)));
+      }
+
+      function renderDigits() {
+        digitsEl.innerHTML = "";
+        sequence.forEach((digit, idx) => {
+          const span = document.createElement("span");
+          span.className = "digit" + (revealed[idx] ? " revealed" : "");
+          if (hidden && !revealed[idx]) {
+            span.textContent = "•";
+          } else {
+            span.textContent = formatTokenForDisplay(digit);
+          }
+          if (mode === "cards" && isRedCard(digit)) {
+            span.classList.add("card-red");
+          }
+          digitsEl.appendChild(span);
+        });
+        if (hidden) {
+          if (currentIndex === 0) {
+            rowScroller.scrollLeft = 0;
+          } else {
+            const currentEl = digitsEl.children[currentIndex];
+            if (currentEl && currentEl.scrollIntoView) {
+              currentEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+            }
+          }
+        }
+        updateSupportHint();
+      }
+
+      function renderAttempts() {
+        attemptsRow.innerHTML = "";
+        for (let idx = 0; idx < sequence.length; idx += 1) {
+          const entry = attempts[idx];
+          const span = document.createElement("span");
+          if (entry) {
+            span.className = `attempt ${entry.correct ? "ok" : "bad"}`;
+            span.textContent = formatTokenForDisplay(entry.digit);
+            if (mode === "cards" && isRedCard(entry.digit)) {
+              span.classList.add("card-red");
+            }
+          } else {
+            span.className = "attempt placeholder";
+            span.textContent = "•";
+          }
+          attemptsRow.appendChild(span);
+        }
+        updateSupportHint();
+      }
+
+      function updateProgress() {
+        if (sequence.length === 0) {
+          progressText.textContent = "Noch keine Ziffernfolge.";
+          return;
+        }
+        progressText.textContent = `Fortschritt: ${currentIndex} / ${sequence.length}`;
+      }
+
+      function updateDashboard() {
+        const length = sequence.length;
+        const progress = length === 0 ? 0 : Math.round((currentIndex / length) * 100);
+        statLength.textContent = String(length);
+        statCorrect.textContent = String(correctCount);
+        statWrong.textContent = String(wrongCount);
+        statStreak.textContent = String(streak);
+        statProgress.textContent = `${progress}%`;
+        statMemTime.textContent = lastViewDurationMs === null ? "--" : formatTime(lastViewDurationMs);
+
+        totalRuns.textContent = String(totals.runs);
+        totalDigits.textContent = String(totals.digits);
+        totalCorrect.textContent = String(totals.correct);
+        totalWrong.textContent = String(totals.wrong);
+        const accuracy = totals.digits === 0 ? 0 : Math.round((totals.correct / totals.digits) * 100);
+        totalAccuracy.textContent = `${accuracy}%`;
+
+        const modeLabel = mode === "binary" ? "Binaer" : mode === "cards" ? "Karten" : "Dezimal";
+        const label = length === 0 ? "--" : `${length} (${modeLabel})`;
+        bestTimesLabel.textContent = label;
+        renderBestTimes(length);
+      }
+
+      function updateSupportHint() {
+        if (!supportEnabled || palaceEntries.length === 0) {
+          supportHint.hidden = true;
+          return;
+        }
+        const idx = currentIndex;
+        const entry = palaceEntries[idx];
+        if (!entry) {
+          supportHint.textContent = `Kein Palast-Eintrag fuer Position ${idx + 1}.`;
+          supportHint.hidden = false;
+          return;
+        }
+        supportHint.innerHTML = `<strong>${idx + 1}.</strong> ${entry.room} – ${entry.place}`;
+        supportHint.hidden = false;
+      }
+
+      function setAssistTab(tab) {
+        assistTabs.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.assistTab === tab);
+        });
+        assistPanels.forEach((panel) => {
+          panel.classList.toggle("active", panel.dataset.assistPanel === tab);
+        });
+      }
+
+      function formatTime(ms) {
+        const totalSeconds = ms / 1000;
+        if (totalSeconds < 60) {
+          return `${totalSeconds.toFixed(1)}s`;
+        }
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toFixed(1).padStart(4, "0")}`;
+      }
+
+      function renderBestTimes(length) {
+        bestTimesList.innerHTML = "";
+        const key = `${mode}:${length}`;
+        if (!length || !bestTimes[key] || bestTimes[key].length === 0) {
+          const li = document.createElement("li");
+          li.textContent = "Keine Eintraege";
+          bestTimesList.appendChild(li);
+          return;
+        }
+        bestTimes[key].forEach((timeMs, idx) => {
+          const li = document.createElement("li");
+          li.textContent = `${idx + 1}. ${formatTime(timeMs)}`;
+          bestTimesList.appendChild(li);
+        });
+      }
+
+      function startTimer() {
+        viewStart = Date.now();
+        lastViewDurationMs = null;
+      }
+
+      function stopTimer() {
+        if (viewStart === null) return;
+        lastViewDurationMs = Date.now() - viewStart;
+        viewStart = null;
+      }
+
+      function loadTotals() {
+        try {
+          const raw = localStorage.getItem("memoraise_totals");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return;
+          totals = {
+            runs: Number(parsed.runs) || 0,
+            digits: Number(parsed.digits) || 0,
+            correct: Number(parsed.correct) || 0,
+            wrong: Number(parsed.wrong) || 0,
+          };
+        } catch (err) {
+          // ignore corrupted storage
+        }
+      }
+
+      function loadBestTimes() {
+        try {
+          const raw = localStorage.getItem("memoraise_best_times");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return;
+          bestTimes = parsed;
+        } catch (err) {
+          // ignore corrupted storage
+        }
+      }
+
+      function saveTotals() {
+        try {
+          localStorage.setItem("memoraise_totals", JSON.stringify(totals));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function saveBestTimes() {
+        try {
+          localStorage.setItem("memoraise_best_times", JSON.stringify(bestTimes));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function loadKeypadState() {
+        try {
+          const raw = localStorage.getItem("memoraise_keypad_hidden");
+          keypadHidden = raw === null ? true : raw === "true";
+        } catch (err) {
+          keypadHidden = true;
+        }
+        keypad.classList.toggle("hidden", keypadHidden);
+        toggleKeypadBtn.textContent = keypadHidden ? "Einblenden" : "Ausblenden";
+      }
+
+      function saveKeypadState() {
+        try {
+          localStorage.setItem("memoraise_keypad_hidden", String(keypadHidden));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function maybeRecordBestTime(length) {
+        if (!length || lastViewDurationMs === null) return;
+        const key = `${mode}:${length}`;
+        if (!bestTimes[key]) {
+          bestTimes[key] = [];
+        }
+        bestTimes[key].push(lastViewDurationMs);
+        bestTimes[key] = bestTimes[key]
+          .sort((a, b) => a - b)
+          .slice(0, 3);
+        saveBestTimes();
+      }
+
+      function isRedCard(token) {
+        return typeof token === "string" && (token.includes("♥") || token.includes("♦"));
+      }
+
+      function formatTokenForDisplay(token) {
+        if (mode !== "cards") return String(token);
+        const match = String(token).match(/^(A|K|Q|J|10|[2-9])(♠|♥|♦|♣)$/);
+        if (!match) return String(token);
+        return `${match[2]}${match[1]}`;
+      }
+
+      function updateInputForMode() {
+        if (mode === "cards") {
+          digitInput.placeholder = "z.B. SA, H10";
+          digitInput.inputMode = "text";
+          digitInput.maxLength = 3;
+          keypadHint.textContent = "Karte: Farbe + Rang";
+          setAssistTab("cards");
+        } else if (mode === "binary") {
+          digitInput.placeholder = "0 oder 1";
+          digitInput.inputMode = "numeric";
+          digitInput.maxLength = 1;
+          keypadHint.textContent = "Nur 0 oder 1";
+          setAssistTab("binary");
+        } else {
+          digitInput.placeholder = "0-9";
+          digitInput.inputMode = "numeric";
+          digitInput.maxLength = 1;
+          keypadHint.textContent = "Zahlen eingeben";
+          setAssistTab("decimal");
+        }
+        supportToggleBtn.style.display = "inline-flex";
+        updateSupportHint();
+      }
+
+      function loadPalace() {
+        try {
+          const raw = localStorage.getItem("memoraise_palace");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) palaceEntries = parsed;
+          }
+          const room = localStorage.getItem("memoraise_palace_last_room");
+          if (room) palaceLastRoom = room;
+          const open = localStorage.getItem("memoraise_palace_open");
+          palaceOpen = open === "true";
+        } catch (err) {
+          palaceEntries = [];
+        }
+      }
+
+      function savePalace() {
+        try {
+          localStorage.setItem("memoraise_palace", JSON.stringify(palaceEntries));
+          localStorage.setItem("memoraise_palace_last_room", palaceLastRoom);
+          localStorage.setItem("memoraise_palace_open", String(palaceOpen));
+        } catch (err) {
+          // ignore storage errors
+        }
+      }
+
+      function updatePalaceOpen() {
+        palaceBody.classList.toggle("hidden", !palaceOpen);
+        palaceToggleBtn.textContent = palaceOpen ? "Zuklappen" : "Aufklappen";
+      }
+
+      function renderPalaceList() {
+        palaceList.innerHTML = "";
+        if (palaceEntries.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "status info";
+          empty.textContent = "Noch keine Plaetze angelegt.";
+          palaceList.appendChild(empty);
+          return;
+        }
+        palaceEntries.forEach((entry, idx) => {
+          const row = document.createElement("div");
+          row.className = "palace-item";
+          row.innerHTML = `
+            <div class="idx">${idx + 1}</div>
+            <div>${entry.room}</div>
+            <div>${entry.place}</div>
+            <button type="button" class="ghost small-button" data-del="${idx}">Loeschen</button>
+          `;
+          palaceList.appendChild(row);
+        });
+      }
+
+      function buildKeypad() {
+        keypad.innerHTML = "";
+        keypad.classList.remove("cards");
+        cardSelection = { rank: null, suit: null };
+        if (mode === "binary") {
+          ["0", "1"].forEach((d) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.dataset.digit = d;
+            btn.textContent = d;
+            keypad.appendChild(btn);
+          });
+          const clear = document.createElement("button");
+          clear.type = "button";
+          clear.dataset.action = "clear";
+          clear.textContent = "C";
+          keypad.appendChild(clear);
+          const back = document.createElement("button");
+          back.type = "button";
+          back.dataset.action = "back";
+          back.textContent = "←";
+          back.className = "primary";
+          keypad.appendChild(back);
+          return;
+        }
+        if (mode === "cards") {
+          keypad.classList.add("cards");
+          cardSuits.forEach((suit) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.dataset.suit = suit.sym;
+            btn.textContent = suit.sym;
+            keypad.appendChild(btn);
+          });
+          cardRanks.forEach((rank) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.dataset.rank = rank;
+            btn.textContent = rank;
+            keypad.appendChild(btn);
+          });
+          const clear = document.createElement("button");
+          clear.type = "button";
+          clear.dataset.action = "clear";
+          clear.textContent = "C";
+          keypad.appendChild(clear);
+          return;
+        }
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].forEach((d) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.dataset.digit = d;
+          btn.textContent = d;
+          keypad.appendChild(btn);
+        });
+        const clear = document.createElement("button");
+        clear.type = "button";
+        clear.dataset.action = "clear";
+        clear.textContent = "C";
+        keypad.appendChild(clear);
+        const back = document.createElement("button");
+        back.type = "button";
+        back.dataset.action = "back";
+        back.textContent = "←";
+        back.className = "primary";
+        keypad.appendChild(back);
+      }
+
+      function setStatus(message, type) {
+        statusEl.textContent = message;
+        statusEl.className = `status ${type}`;
+      }
+
+      function resetTraining() {
+        revealed = sequence.map(() => !hidden);
+        currentIndex = 0;
+        correctCount = 0;
+        wrongCount = 0;
+        streak = 0;
+        attempts = Array.from({ length: sequence.length }, () => null);
+        cardSelection = { rank: null, suit: null };
+        rowScroller.classList.toggle("single-line", hidden);
+        if (hidden) {
+          stopTimer();
+        } else {
+          startTimer();
+        }
+        renderDigits();
+        renderAttempts();
+        updateProgress();
+        updateDashboard();
+        updateSupportHint();
+        setStatus("Bereit. Blende die Ziffernfolge aus und beginne.", "info");
+        digitInput.value = "";
+        digitInput.focus();
+      }
+
+      generateBtn.addEventListener("click", () => {
+        const length = Math.max(1, Math.min(200, Number(lengthInput.value) || 1));
+        sequence = buildSequence(length);
+        totals.runs += 1;
+        totals.digits += length;
+        saveTotals();
+        hidden = false;
+        toggleBtn.textContent = "Ausblenden";
+        rowScroller.classList.remove("single-line");
+        startTimer();
+        resetTraining();
+      });
+
+      toggleBtn.addEventListener("click", () => {
+        if (sequence.length === 0) {
+          setStatus("Erstelle zuerst eine Ziffernfolge.", "info");
+          return;
+        }
+        hidden = !hidden;
+        toggleBtn.textContent = hidden ? "Einblenden" : "Ausblenden";
+        rowScroller.classList.toggle("single-line", hidden);
+        if (hidden) {
+          stopTimer();
+        } else {
+          startTimer();
+        }
+        revealed = sequence.map(() => !hidden);
+        renderDigits();
+        setStatus(hidden ? "Ziffernfolge ausgeblendet. Starte mit der ersten Ziffer." : "Ziffernfolge sichtbar.", "info");
+        digitInput.focus();
+      });
+
+      resetBtn.addEventListener("click", () => {
+        if (sequence.length === 0) {
+          setStatus("Erstelle zuerst eine Ziffernfolge.", "info");
+          return;
+        }
+        const length = Math.max(1, Math.min(200, Number(lengthInput.value) || 1));
+        sequence = buildSequence(length);
+        totals.runs += 1;
+        totals.digits += length;
+        saveTotals();
+        hidden = false;
+        toggleBtn.textContent = "Ausblenden";
+        rowScroller.classList.remove("single-line");
+        resetTraining();
+      });
+
+      function handleDigitInput(raw) {
+        if (sequence.length === 0) {
+          setStatus("Erstelle zuerst eine Ziffernfolge.", "info");
+          digitInput.value = "";
+          return;
+        }
+        if (currentIndex >= sequence.length) {
+          setStatus("Fertig! Du hast die gesamte Folge abgeschlossen.", "ok");
+          digitInput.value = "";
+          return;
+        }
+
+        if (!hidden) {
+          hidden = true;
+          toggleBtn.textContent = "Einblenden";
+          rowScroller.classList.add("single-line");
+          stopTimer();
+          revealed = sequence.map(() => false);
+          renderDigits();
+          setStatus("Ziffernfolge ausgeblendet. Starte mit der ersten Ziffer.", "info");
+        }
+
+        let token = null;
+        if (mode === "cards") {
+          const value = String(raw).trim().toUpperCase();
+          const match = value.match(/^([SHDC♠♥♦♣])\s*(A|K|Q|J|10|[2-9])$/);
+          if (match) {
+            const suitRaw = match[1];
+            const rank = match[2];
+            const suit = suitRaw === "S" ? "♠" : suitRaw === "H" ? "♥" : suitRaw === "D" ? "♦" : suitRaw === "C" ? "♣" : suitRaw;
+            token = `${rank}${suit}`;
+          } else {
+            if (value.length < 2) {
+              return;
+            }
+            return;
+          }
+        } else if (mode === "binary") {
+          const value = String(raw).replace(/[^01]/g, "");
+          if (value === "") {
+            digitInput.value = "";
+            return;
+          }
+          token = value[0];
+        } else {
+          const value = String(raw).replace(/\D/g, "");
+          if (value === "") {
+            digitInput.value = "";
+            return;
+          }
+          token = value[0];
+        }
+
+        const correctDigit = sequence[currentIndex];
+        const isCorrect = token === correctDigit;
+
+        revealed[currentIndex] = true;
+        renderDigits();
+        attempts[currentIndex] = { digit: token, correct: isCorrect };
+        renderAttempts();
+
+        if (isCorrect) {
+          correctCount += 1;
+          streak += 1;
+          totals.correct += 1;
+          setStatus("Richtig!", "ok");
+        } else {
+          wrongCount += 1;
+          streak = 0;
+          totals.wrong += 1;
+          setStatus(`Falsch. Richtig war ${correctDigit}.`, "bad");
+        }
+
+        currentIndex += 1;
+        updateProgress();
+        saveTotals();
+        updateDashboard();
+        updateSupportHint();
+        digitInput.value = "";
+
+        if (currentIndex >= sequence.length) {
+          setStatus("Fertig! Du hast die gesamte Folge abgeschlossen.", "ok");
+          if (wrongCount === 0) {
+            maybeRecordBestTime(sequence.length);
+            updateDashboard();
+          }
+        }
+      }
+
+      digitInput.addEventListener("input", () => {
+        handleDigitInput(digitInput.value);
+      });
+
+      keypad.addEventListener("click", (event) => {
+        const target = event.target.closest("button");
+        if (!target) return;
+        const action = target.dataset.action;
+        if (action === "clear") {
+          digitInput.value = "";
+          cardSelection = { rank: null, suit: null };
+          digitInput.focus();
+          return;
+        }
+        if (action === "back") {
+          digitInput.value = digitInput.value.slice(0, -1);
+          digitInput.focus();
+          return;
+        }
+        const digit = target.dataset.digit;
+        if (digit !== undefined) {
+          digitInput.value = digit;
+          handleDigitInput(digit);
+          digitInput.focus();
+          return;
+        }
+        const rank = target.dataset.rank;
+        const suit = target.dataset.suit;
+        if (rank) {
+          cardSelection.rank = rank;
+        }
+        if (suit) {
+          cardSelection.suit = suit;
+        }
+        if (cardSelection.rank && cardSelection.suit) {
+          const card = `${cardSelection.suit}${cardSelection.rank}`;
+          digitInput.value = card;
+          handleDigitInput(card);
+          cardSelection = { rank: null, suit: null };
+          digitInput.focus();
+        }
+      });
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        document.body.dataset.mode = mode;
+        updateInputForMode();
+        buildKeypad();
+        const length = Math.max(1, Math.min(200, Number(lengthInput.value) || 1));
+        sequence = buildSequence(length);
+        totals.runs += 1;
+        totals.digits += length;
+        saveTotals();
+        hidden = false;
+        toggleBtn.textContent = "Ausblenden";
+        rowScroller.classList.remove("single-line");
+        startTimer();
+        resetTraining();
+      }
+
+      modeButtons.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-mode]");
+        if (!btn) return;
+        const nextMode = btn.dataset.mode;
+        if (!nextMode || nextMode === mode) return;
+        modeButtons.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+        setMode(nextMode);
+      });
+
+      toggleKeypadBtn.addEventListener("click", () => {
+        keypadHidden = !keypadHidden;
+        keypad.classList.toggle("hidden", keypadHidden);
+        toggleKeypadBtn.textContent = keypadHidden ? "Einblenden" : "Ausblenden";
+        saveKeypadState();
+      });
+
+      supportToggleBtn.addEventListener("click", () => {
+        supportEnabled = !supportEnabled;
+        supportToggleBtn.classList.toggle("secondary", supportEnabled);
+        updateSupportHint();
+      });
+
+      assistTabs.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          setAssistTab(btn.dataset.assistTab);
+        });
+      });
+
+      assistToggleBtn.addEventListener("click", () => {
+        assistOpen = !assistOpen;
+        assistBody.classList.toggle("open", assistOpen);
+        assistToggleBtn.textContent = assistOpen ? "Zuklappen" : "Aufklappen";
+      });
+
+      resetStatsBtn.addEventListener("click", () => {
+        totals = { runs: 0, digits: 0, correct: 0, wrong: 0 };
+        bestTimes = {};
+        saveTotals();
+        saveBestTimes();
+        updateDashboard();
+      });
+
+      palaceRoom.addEventListener("focus", () => {
+        if (!palaceRoom.value && palaceLastRoom) {
+          palaceRoom.value = palaceLastRoom;
+        }
+      });
+
+      palaceAddBtn.addEventListener("click", () => {
+        const room = palaceRoom.value.trim();
+        const place = palacePlace.value.trim();
+        if (!room || !place) {
+          return;
+        }
+        const posRaw = Number(palacePos.value);
+        const entry = { room, place };
+        if (Number.isFinite(posRaw) && posRaw >= 1 && posRaw <= palaceEntries.length + 1) {
+          palaceEntries.splice(posRaw - 1, 0, entry);
+        } else {
+          palaceEntries.push(entry);
+        }
+        palaceLastRoom = room;
+        savePalace();
+        renderPalaceList();
+        palacePlace.value = "";
+        palacePos.value = "";
+        palaceRoom.focus();
+      });
+
+      palaceClearBtn.addEventListener("click", () => {
+        palaceEntries = [];
+        savePalace();
+        renderPalaceList();
+      });
+
+      palaceList.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-del]");
+        if (!btn) return;
+        const idx = Number(btn.dataset.del);
+        if (Number.isFinite(idx)) {
+          palaceEntries.splice(idx, 1);
+          savePalace();
+          renderPalaceList();
+        }
+      });
+
+      palaceToggleBtn.addEventListener("click", () => {
+        palaceOpen = !palaceOpen;
+        updatePalaceOpen();
+        savePalace();
+      });
+
+      palaceExportBtn.addEventListener("click", () => {
+        palaceJson.value = JSON.stringify(palaceEntries, null, 2);
+      });
+
+      palaceImportBtn.addEventListener("click", () => {
+        try {
+          const parsed = JSON.parse(palaceJson.value);
+          if (!Array.isArray(parsed)) return;
+          const cleaned = parsed
+            .filter((item) => item && typeof item === "object")
+            .map((item) => ({
+              room: String(item.room || "").trim(),
+              place: String(item.place || "").trim(),
+            }))
+            .filter((item) => item.room && item.place);
+          palaceEntries = cleaned;
+          palaceLastRoom = cleaned.length ? cleaned[cleaned.length - 1].room : palaceLastRoom;
+          savePalace();
+          renderPalaceList();
+        } catch (err) {
+          // ignore invalid json
+        }
+      });
+
+      loadTotals();
+      loadBestTimes();
+      loadKeypadState();
+      const initialModeBtn = modeButtons.querySelector("button.active");
+      mode = initialModeBtn ? initialModeBtn.dataset.mode : "decimal";
+      document.body.dataset.mode = mode;
+      loadPalace();
+      renderPalaceList();
+      updatePalaceOpen();
+      updateInputForMode();
+      buildKeypad();
+      updateSupportHint();
+      updateDashboard();
+    </script>
+  </body>
+</html>

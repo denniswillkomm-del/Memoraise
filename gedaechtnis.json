@@ -1,0 +1,170 @@
+[
+  {
+    "room": "Büro",
+    "place": "Computertisch"
+  },
+  {
+    "room": "Büro",
+    "place": "Siemenstisch"
+  },
+  {
+    "room": "Büro",
+    "place": "SIE-Schublade oben"
+  },
+  {
+    "room": "Büro",
+    "place": "SIE-Schublade Mitte"
+  },
+  {
+    "room": "Büro",
+    "place": "SIE-Schublade unten"
+  },
+  {
+    "room": "Büro",
+    "place": "SIE-Tür"
+  },
+  {
+    "room": "Büro",
+    "place": "Drucker"
+  },
+  {
+    "room": "Büro",
+    "place": "Drucker-Ordnerfach"
+  },
+  {
+    "room": "Büro",
+    "place": "Drucker-Schubladen"
+  },
+  {
+    "room": "Büro",
+    "place": "Schreibtisch"
+  },
+  {
+    "room": "Büro",
+    "place": "ST-Bücherbrett"
+  },
+  {
+    "room": "Büro",
+    "place": "ST-Schublade oben"
+  },
+  {
+    "room": "Büro",
+    "place": "ST-Schublade Mitte"
+  },
+  {
+    "room": "Büro",
+    "place": "ST-Schublade unten"
+  },
+  {
+    "room": "Büro",
+    "place": "Container"
+  },
+  {
+    "room": "Büro",
+    "place": "Klavier"
+  },
+  {
+    "room": "Büro",
+    "place": "Klavierhocker"
+  },
+  {
+    "room": "Büro",
+    "place": "Regal-Masters"
+  },
+  {
+    "room": "Büro",
+    "place": "Regal-Batman"
+  },
+  {
+    "room": "Büro",
+    "place": "Regal-Barca"
+  },
+  {
+    "room": "Büro",
+    "place": "Regal-Hüte"
+  },
+  {
+    "room": "Büro",
+    "place": "Regal-Kiste"
+  },
+  {
+    "room": "Büro",
+    "place": "Wandregal Hofert"
+  },
+  {
+    "room": "Büro",
+    "place": "Wandregal Katana"
+  },
+  {
+    "room": "Büro",
+    "place": "Bild OE"
+  },
+  {
+    "room": "Büro",
+    "place": "Wandregal Tools"
+  },
+  {
+    "room": "Büro",
+    "place": "Fernseher"
+  },
+  {
+    "room": "Büro",
+    "place": "Bodenschrank-SW"
+  },
+  {
+    "room": "Büro",
+    "place": "Tür"
+  },
+  {
+    "room": "Büro",
+    "place": "Leinwand"
+  },
+  {
+    "room": "Büro",
+    "place": "Billy-Top"
+  },
+  {
+    "room": "Büro",
+    "place": "Bily-links"
+  },
+  {
+    "room": "Büro",
+    "place": "Billy-rechts"
+  },
+  {
+    "room": "Büro",
+    "place": "Bild Rose"
+  },
+  {
+    "room": "Büro",
+    "place": "Ablage Dokumente"
+  },
+  {
+    "room": "Büro",
+    "place": "Sideboard-Tür"
+  },
+  {
+    "room": "Büro",
+    "place": "Sideboard-Schublade"
+  },
+  {
+    "room": "Büro",
+    "place": "Sideboard-rechts unten"
+  },
+  {
+    "room": "Büro",
+    "place": "Whiteboard"
+  },
+  {
+    "room": "Büro",
+    "place": "Rucksäcke"
+  },
+  {
+    "room": "Büro",
+    "place": "Beamerregal"
+  },
+  {
+    "room": "Büro",
+    "place": "Sofa"
+  }
+]
