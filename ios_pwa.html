@@ -51,7 +51,8 @@
       }
 
       body.mobile-ui .app {
-        padding: 18px;
+        padding: 14px;
+        gap: 16px;
       }
 
       body.mobile-ui .controls {
@@ -63,12 +64,12 @@
       }
 
       body.mobile-ui .layout {
-        gap: 16px;
+        gap: 12px;
       }
 
       body.mobile-ui .digits,
       body.mobile-ui .attempts-row {
-        gap: 6px;
+        gap: 5px;
       }
 
       body.mobile-ui .card {
@@ -81,11 +82,12 @@
 
       body.mobile-ui .dashboard {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
+        gap: 6px;
       }
 
       body.mobile-ui .keypad {
         grid-template-columns: repeat(3, minmax(56px, 1fr));
+        gap: 6px;
       }
 
       body.mobile-ui .keypad.cards {
@@ -93,11 +95,11 @@
       }
 
       body.mobile-ui .palace {
-        padding: 12px;
+        padding: 10px;
       }
 
       body.mobile-ui .training {
-        padding: 12px;
+        padding: 10px;
       }
 
       body.mobile-ui .chunk-controls {
@@ -404,7 +406,7 @@
       }
 
       .keypad button {
-        padding: 12px 0;
+        padding: 10px 0;
         border-radius: 14px;
         font-size: 1.1rem;
         font-weight: 600;
@@ -838,12 +840,6 @@
 
           <section class="training panel">
             <div class="input-row">
-              <label>
-                Naechste Eingabe
-                <div id="supportHint" class="support-hint" hidden></div>
-                <div id="chunkHint" class="support-hint" hidden></div>
-                <input id="digitInput" type="text" inputmode="numeric" maxlength="3" placeholder="0-9" />
-              </label>
               <div class="keypad-panel">
                 <div class="keypad-header">
                   <span>Tastenfeld</span>
@@ -852,6 +848,8 @@
                     <button id="toggleKeypadBtn" class="ghost small-button" type="button">Ausblenden</button>
                   </div>
                 </div>
+                <div id="supportHint" class="support-hint" hidden></div>
+                <div id="chunkHint" class="support-hint" hidden></div>
                 <div class="keypad-subtext" id="keypadHint">Zahlen eingeben</div>
                 <div class="keypad" id="keypad" aria-label="Tastenfeld">
                   <button type="button" data-digit="1">1</button>
@@ -1662,24 +1660,22 @@
         keypad.classList.remove("cards");
         cardSelection = { rank: null, suit: null };
         if (mode === "binary") {
-          ["0", "1"].forEach((d) => {
+          ["1", "0", "C", "←"].forEach((d) => {
             const btn = document.createElement("button");
             btn.type = "button";
-            btn.dataset.digit = d;
-            btn.textContent = d;
+            if (d === "C") {
+              btn.dataset.action = "clear";
+              btn.textContent = "C";
+            } else if (d === "←") {
+              btn.dataset.action = "back";
+              btn.textContent = "←";
+              btn.className = "primary";
+            } else {
+              btn.dataset.digit = d;
+              btn.textContent = d;
+            }
             keypad.appendChild(btn);
           });
-          const clear = document.createElement("button");
-          clear.type = "button";
-          clear.dataset.action = "clear";
-          clear.textContent = "C";
-          keypad.appendChild(clear);
-          const back = document.createElement("button");
-          back.type = "button";
-          back.dataset.action = "back";
-          back.textContent = "←";
-          back.className = "primary";
-          keypad.appendChild(back);
           return;
         }
         if (mode === "cards") {
@@ -1705,24 +1701,22 @@
           keypad.appendChild(clear);
           return;
         }
-        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].forEach((d) => {
+        ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "←"].forEach((d) => {
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.dataset.digit = d;
-          btn.textContent = d;
+          if (d === "C") {
+            btn.dataset.action = "clear";
+            btn.textContent = "C";
+          } else if (d === "←") {
+            btn.dataset.action = "back";
+            btn.textContent = "←";
+            btn.className = "primary";
+          } else {
+            btn.dataset.digit = d;
+            btn.textContent = d;
+          }
           keypad.appendChild(btn);
         });
-        const clear = document.createElement("button");
-        clear.type = "button";
-        clear.dataset.action = "clear";
-        clear.textContent = "C";
-        keypad.appendChild(clear);
-        const back = document.createElement("button");
-        back.type = "button";
-        back.dataset.action = "back";
-        back.textContent = "←";
-        back.className = "primary";
-        keypad.appendChild(back);
       }
 
       function setStatus(message, type) {
