@@ -1777,7 +1777,7 @@
           sequence: seq.slice(0, 200),
         };
         history.unshift(entry);
-        history = history.slice(0, 20);
+        history = history.slice(0, 10);
         saveHistory();
         renderHistory();
       }
@@ -2499,7 +2499,6 @@
           updateInputForMode();
           buildKeypad();
           sequence = seq;
-          pushHistory(sequence, { name: memo.name });
           hidden = false;
           toggleBtn.textContent = "Ausblenden";
           rowScroller.classList.remove("single-line");
