@@ -1441,6 +1441,15 @@
         });
       }
 
+      function applyMobileUiInputBehavior() {
+        if (mobileUi) {
+          digitInput.setAttribute("readonly", "readonly");
+          digitInput.inputMode = "none";
+        } else {
+          digitInput.removeAttribute("readonly");
+        }
+      }
+
       function formatTime(ms) {
         const totalSeconds = ms / 1000;
         if (totalSeconds < 60) {
@@ -1587,6 +1596,7 @@
           setAssistTab("decimal");
         }
         supportToggleBtn.style.display = "inline-flex";
+        applyMobileUiInputBehavior();
         updateSupportHint();
       }
 
@@ -2030,6 +2040,13 @@
         document.body.classList.toggle("mobile-ui", mobileUi);
         mobileToggleBtn.textContent = mobileUi ? "Desktop-UI" : "Mobile-UI";
         saveMobileUi();
+        applyMobileUiInputBehavior();
+      });
+
+      digitInput.addEventListener("focus", () => {
+        if (mobileUi) {
+          digitInput.blur();
+        }
       });
 
       resetStatsBtn.addEventListener("click", () => {
@@ -2129,6 +2146,7 @@
       chunkSize = Math.max(1, Number(chunkSizeInput.value) || 1);
       updateChunkHint();
       loadMobileUi();
+      applyMobileUiInputBehavior();
       updateDashboard();
     </script>
   </body>
