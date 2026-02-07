@@ -248,6 +248,17 @@
         margin-bottom: 8px;
       }
 
+      .panel-body.hidden {
+        display: none;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
       .digits {
         display: flex;
         flex-wrap: wrap;
@@ -503,6 +514,11 @@
       .dashboard-group {
         display: grid;
         gap: 12px;
+      }
+
+      .dashboard-group.total .card {
+        background: #f3f7ff;
+        border-color: #d8e6ff;
       }
 
       .dashboard-title {
