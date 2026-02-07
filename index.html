@@ -878,9 +878,10 @@
                   </label>
                   <label>
                     Paeckchen-Groesse
-                    <input id="chunkSize" type="number" min="1" value="3" />
+                    <input id="chunkSize" type="number" min="1" value="2" />
                   </label>
-                  <button id="nextChunkBtn" class="secondary" type="button">Naechstes Paeckchen</button>
+                  <button id="prevChunkBtn" class="ghost" type="button">Vorheriges</button>
+                  <button id="nextChunkBtn" class="secondary" type="button">Naechstes</button>
                 </div>
               </div>
             </div>
@@ -1232,6 +1233,7 @@
       const mobileToggleBtn = document.getElementById("mobileToggleBtn");
       const chunkEnabled = document.getElementById("chunkEnabled");
       const chunkSizeInput = document.getElementById("chunkSize");
+      const prevChunkBtn = document.getElementById("prevChunkBtn");
       const nextChunkBtn = document.getElementById("nextChunkBtn");
       const chunkToggleBtn = document.getElementById("chunkToggleBtn");
       const chunkBody = document.getElementById("chunkBody");
@@ -1976,6 +1978,12 @@
 
       nextChunkBtn.addEventListener("click", () => {
         chunkIndex += 1;
+        renderDigits();
+        updateChunkHint();
+      });
+
+      prevChunkBtn.addEventListener("click", () => {
+        chunkIndex = Math.max(0, chunkIndex - 1);
         renderDigits();
         updateChunkHint();
       });
