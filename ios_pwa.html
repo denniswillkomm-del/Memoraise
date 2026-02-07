@@ -284,6 +284,11 @@
         color: #1c3f7a;
       }
 
+      .digit.chunk {
+        outline: 2px solid #0a66d9;
+        outline-offset: 2px;
+      }
+
       .training {
         display: grid;
         gap: 12px;
@@ -324,6 +329,18 @@
 
       .support-hint strong {
         color: var(--ink);
+      }
+
+      .chunk-controls {
+        display: grid;
+        gap: 8px;
+      }
+
+      .chunk-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
       }
 
       .keypad-subtext {
@@ -761,6 +778,7 @@
               <label>
                 Naechste Eingabe
                 <div id="supportHint" class="support-hint" hidden></div>
+                <div id="chunkHint" class="support-hint" hidden></div>
                 <input id="digitInput" type="text" inputmode="numeric" maxlength="3" placeholder="0-9" />
               </label>
               <div class="keypad-panel">
@@ -786,6 +804,19 @@
                   <button type="button" data-digit="0">0</button>
                   <button type="button" class="primary" data-action="back">←</button>
                 </div>
+              </div>
+            </div>
+            <div class="chunk-controls">
+              <div class="chunk-row">
+                <label>
+                  Uebungsmodus
+                  <input id="chunkEnabled" type="checkbox" />
+                </label>
+                <label>
+                  Paeckchen-Groesse
+                  <input id="chunkSize" type="number" min="1" value="3" />
+                </label>
+                <button id="nextChunkBtn" class="secondary" type="button">Naechstes Paeckchen</button>
               </div>
             </div>
             <div class="status info" id="status">Erstelle zuerst eine Ziffernfolge.</div>
@@ -1128,11 +1159,15 @@
       const toggleKeypadBtn = document.getElementById("toggleKeypadBtn");
       const supportToggleBtn = document.getElementById("supportToggleBtn");
       const supportHint = document.getElementById("supportHint");
+      const chunkHint = document.getElementById("chunkHint");
       const assistTabs = document.querySelectorAll("[data-assist-tab]");
       const assistPanels = document.querySelectorAll("[data-assist-panel]");
       const assistToggleBtn = document.getElementById("assistToggleBtn");
       const assistBody = document.getElementById("assistBody");
       const mobileToggleBtn = document.getElementById("mobileToggleBtn");
+      const chunkEnabled = document.getElementById("chunkEnabled");
+      const chunkSizeInput = document.getElementById("chunkSize");
+      const nextChunkBtn = document.getElementById("nextChunkBtn");
       const palaceSection = document.getElementById("palaceSection");
       const palaceBody = document.getElementById("palaceBody");
       const palaceRoom = document.getElementById("palaceRoom");
@@ -1172,6 +1207,8 @@
       let supportEnabled = false;
       let assistOpen = false;
       let mobileUi = false;
+      let chunkSize = 3;
+      let chunkIndex = 0;
 
       const cardRanks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
       const cardSuits = [
@@ -1207,6 +1244,9 @@
         sequence.forEach((digit, idx) => {
           const span = document.createElement("span");
           span.className = "digit" + (revealed[idx] ? " revealed" : "");
+          if (chunkEnabled.checked && inCurrentChunk(idx)) {
+            span.classList.add("chunk");
+          }
           if (hidden && !revealed[idx]) {
             span.textContent = "•";
           } else {
@@ -1295,6 +1335,31 @@
         }
         supportHint.innerHTML = `<strong>${idx + 1}.</strong> ${entry.room} – ${entry.place}`;
         supportHint.hidden = false;
+      }
+
+      function inCurrentChunk(idx) {
+        const start = chunkIndex * chunkSize;
+        return idx >= start && idx < start + chunkSize;
+      }
+
+      function updateChunkHint() {
+        if (!chunkEnabled.checked) {
+          chunkHint.hidden = true;
+          return;
+        }
+        const start = chunkIndex * chunkSize;
+        if (start >= sequence.length) {
+          chunkHint.textContent = "Keine weiteren Paeckchen.";
+          chunkHint.hidden = false;
+          return;
+        }
+        const end = Math.min(sequence.length, start + chunkSize);
+        let palaceText = "";
+        if (palaceEntries[start]) {
+          palaceText = ` | Palast: ${palaceEntries[start].room} – ${palaceEntries[start].place}`;
+        }
+        chunkHint.textContent = `Paeckchen ${chunkIndex + 1}: Position ${start + 1}–${end}${palaceText}`;
+        chunkHint.hidden = false;
       }
 
       function setAssistTab(tab) {
@@ -1589,6 +1654,7 @@
         streak = 0;
         attempts = Array.from({ length: sequence.length }, () => null);
         cardSelection = { rank: null, suit: null };
+        chunkIndex = 0;
         rowScroller.classList.toggle("single-line", hidden);
         if (hidden) {
           stopTimer();
@@ -1600,6 +1666,7 @@
         updateProgress();
         updateDashboard();
         updateSupportHint();
+        updateChunkHint();
         setStatus("Bereit. Blende die Ziffernfolge aus und beginne.", "info");
         digitInput.value = "";
         digitInput.focus();
@@ -1731,6 +1798,7 @@
         saveTotals();
         updateDashboard();
         updateSupportHint();
+        updateChunkHint();
         digitInput.value = "";
 
         if (currentIndex >= sequence.length) {
@@ -1822,6 +1890,26 @@
         supportEnabled = !supportEnabled;
         supportToggleBtn.classList.toggle("secondary", supportEnabled);
         updateSupportHint();
+      });
+
+      chunkEnabled.addEventListener("change", () => {
+        chunkIndex = 0;
+        renderDigits();
+        updateChunkHint();
+      });
+
+      chunkSizeInput.addEventListener("change", () => {
+        const val = Math.max(1, Number(chunkSizeInput.value) || 1);
+        chunkSize = val;
+        chunkIndex = 0;
+        renderDigits();
+        updateChunkHint();
+      });
+
+      nextChunkBtn.addEventListener("click", () => {
+        chunkIndex += 1;
+        renderDigits();
+        updateChunkHint();
       });
 
       assistTabs.forEach((btn) => {
@@ -1956,6 +2044,8 @@
       updateInputForMode();
       buildKeypad();
       updateSupportHint();
+      chunkSize = Math.max(1, Number(chunkSizeInput.value) || 1);
+      updateChunkHint();
       loadMobileUi();
       updateDashboard();
 
