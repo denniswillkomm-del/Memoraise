@@ -76,8 +76,11 @@
       }
 
       body.mobile-ui .dashboard {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
+        display: none;
+      }
+
+      body.mobile-ui .stats-table {
+        display: table;
       }
 
       body.mobile-ui .keypad {
@@ -543,6 +546,25 @@
       .dashboard-group.total .card {
         background: #f3f7ff;
         border-color: #d8e6ff;
+      }
+
+      .stats-table {
+        display: none;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--text-sm);
+      }
+
+      .stats-table th,
+      .stats-table td {
+        border-bottom: 1px solid #e2e6ee;
+        padding: 6px 8px;
+        text-align: left;
+      }
+
+      .stats-table th {
+        color: var(--muted);
+        font-weight: 600;
       }
 
       .dashboard-title {
@@ -1056,6 +1078,36 @@
                 </div>
               </div>
             </div>
+            <table class="stats-table" aria-label="Statistik (mobil)">
+              <thead>
+                <tr>
+                  <th>Typ</th>
+                  <th>Laenge</th>
+                  <th>Richtig</th>
+                  <th>Falsch</th>
+                  <th>Streak</th>
+                  <th>Fortschritt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Aktuell</td>
+                  <td id="statLengthM">0</td>
+                  <td id="statCorrectM">0</td>
+                  <td id="statWrongM">0</td>
+                  <td id="statStreakM">0</td>
+                  <td id="statProgressM">0%</td>
+                </tr>
+                <tr>
+                  <td>Gesamt</td>
+                  <td id="totalDigitsM">0</td>
+                  <td id="totalCorrectM">0</td>
+                  <td id="totalWrongM">0</td>
+                  <td>-</td>
+                  <td id="totalAccuracyM">0%</td>
+                </tr>
+              </tbody>
+            </table>
             <div class="stats-actions">
               <div class="card">
                 <div class="label">Bestzeiten (Laenge)</div>
@@ -1351,11 +1403,20 @@
       const statStreak = document.getElementById("statStreak");
       const statProgress = document.getElementById("statProgress");
       const statMemTime = document.getElementById("statMemTime");
+      const statLengthM = document.getElementById("statLengthM");
+      const statCorrectM = document.getElementById("statCorrectM");
+      const statWrongM = document.getElementById("statWrongM");
+      const statStreakM = document.getElementById("statStreakM");
+      const statProgressM = document.getElementById("statProgressM");
       const totalRuns = document.getElementById("totalRuns");
       const totalDigits = document.getElementById("totalDigits");
       const totalCorrect = document.getElementById("totalCorrect");
       const totalWrong = document.getElementById("totalWrong");
       const totalAccuracy = document.getElementById("totalAccuracy");
+      const totalDigitsM = document.getElementById("totalDigitsM");
+      const totalCorrectM = document.getElementById("totalCorrectM");
+      const totalWrongM = document.getElementById("totalWrongM");
+      const totalAccuracyM = document.getElementById("totalAccuracyM");
       const bestTimesLabel = document.getElementById("bestTimesLabel");
       const bestTimesList = document.getElementById("bestTimesList");
       const attemptsRow = document.getElementById("attemptsRow");
@@ -1538,6 +1599,16 @@
         totalWrong.textContent = String(totals.wrong);
         const accuracy = totals.digits === 0 ? 0 : Math.round((totals.correct / totals.digits) * 100);
         totalAccuracy.textContent = `${accuracy}%`;
+
+        statLengthM.textContent = String(length);
+        statCorrectM.textContent = String(correctCount);
+        statWrongM.textContent = String(wrongCount);
+        statStreakM.textContent = String(streak);
+        statProgressM.textContent = `${progress}%`;
+        totalDigitsM.textContent = String(totals.digits);
+        totalCorrectM.textContent = String(totals.correct);
+        totalWrongM.textContent = String(totals.wrong);
+        totalAccuracyM.textContent = `${accuracy}%`;
 
         const modeLabel = mode === "binary" ? "Binaer" : mode === "cards" ? "Karten" : "Dezimal";
         const label = length === 0 ? "--" : `${length} (${modeLabel})`;
@@ -1748,6 +1819,7 @@
           row.innerHTML = `
             <div><strong>${memo.name}</strong></div>
             <div class="button-row">
+              <button type="button" class="ghost small-button" data-memo-train="${idx}">Trainieren</button>
               <button type="button" class="ghost small-button" data-memo-toggle="${idx}">Anzeigen</button>
               <button type="button" class="ghost small-button" data-memo-del="${idx}">Loeschen</button>
             </div>
@@ -2397,6 +2469,40 @@
       memoList.addEventListener("click", (event) => {
         const toggleBtn = event.target.closest("button[data-memo-toggle]");
         const delBtn = event.target.closest("button[data-memo-del]");
+        const trainBtn = event.target.closest("button[data-memo-train]");
+        if (trainBtn) {
+          const idx = Number(trainBtn.dataset.memoTrain);
+          const memo = memos[idx];
+          if (!memo) return;
+          const raw = String(memo.value || "");
+          const only01 = raw.replace(/[^01]/g, "");
+          const onlyDigits = raw.replace(/\D/g, "");
+          let nextMode = "decimal";
+          let seq = [];
+          if (only01.length > 0 && only01.length === raw.replace(/[\s-]/g, "").length) {
+            nextMode = "binary";
+            seq = only01.split("");
+          } else if (onlyDigits.length > 0) {
+            nextMode = "decimal";
+            seq = onlyDigits.split("");
+          } else {
+            return;
+          }
+          modeButtons.querySelectorAll("button").forEach((b) =>
+            b.classList.toggle("active", b.dataset.mode === nextMode)
+          );
+          mode = nextMode;
+          document.body.dataset.mode = mode;
+          updateInputForMode();
+          buildKeypad();
+          sequence = seq;
+          pushHistory(sequence);
+          hidden = false;
+          toggleBtn.textContent = "Ausblenden";
+          rowScroller.classList.remove("single-line");
+          resetTraining();
+          return;
+        }
         if (toggleBtn) {
           const idx = toggleBtn.dataset.memoToggle;
           const content = memoList.querySelector(`[data-memo-content="${idx}"]`);
