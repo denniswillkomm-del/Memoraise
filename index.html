@@ -2478,13 +2478,13 @@
           const memo = memos[idx];
           if (!memo) return;
           const raw = String(memo.value || "");
-          const only01 = raw.replace(/[^01]/g, "");
+          const compact = raw.replace(/[\s-]/g, "");
           const onlyDigits = raw.replace(/\D/g, "");
           let nextMode = "decimal";
           let seq = [];
-          if (only01.length > 0 && only01.length === raw.replace(/[\s-]/g, "").length) {
+          if (/^[01]+$/.test(compact)) {
             nextMode = "binary";
-            seq = only01.split("");
+            seq = compact.split("");
           } else if (onlyDigits.length > 0) {
             nextMode = "decimal";
             seq = onlyDigits.split("");
@@ -2499,6 +2499,7 @@
           updateInputForMode();
           buildKeypad();
           sequence = seq;
+          lengthInput.value = String(seq.length);
           hidden = false;
           toggleBtn.textContent = "Ausblenden";
           rowScroller.classList.remove("single-line");
