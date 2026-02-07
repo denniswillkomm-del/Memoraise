@@ -166,6 +166,19 @@
         align-items: end;
       }
 
+      .config-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .config-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
       label {
         display: grid;
         gap: 6px;
@@ -647,6 +660,16 @@
         gap: 8px;
       }
 
+      .palace-io-block {
+        display: grid;
+        gap: 6px;
+      }
+
+      .palace-io-title {
+        font-size: var(--text-sm);
+        color: var(--muted);
+      }
+
       .palace-io textarea {
         width: 100%;
         min-height: 120px;
@@ -831,20 +854,22 @@
               <button id="configToggleBtn" class="ghost small-button" type="button">Zuklappen</button>
             </div>
             <div id="configBody" class="panel-body">
-              <label>
-                Laenge der Ziffernfolge
-                <input id="lengthInput" type="number" min="1" max="200" value="12" />
-              </label>
-              <label>
-                Modus
-                <div class="tab-row" id="modeButtons">
-                  <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
-                  <button type="button" class="tab-button" data-mode="binary">Binaer</button>
-                  <button type="button" class="tab-button" data-mode="cards">Karten</button>
-                </div>
-              </label>
+              <div class="config-grid">
+                <label>
+                  Laenge der Ziffernfolge
+                  <input id="lengthInput" type="number" min="1" max="200" value="12" />
+                </label>
+                <label>
+                  Modus
+                  <div class="tab-row" id="modeButtons">
+                    <button type="button" class="tab-button active" data-mode="decimal">Dezimal</button>
+                    <button type="button" class="tab-button" data-mode="binary">Binaer</button>
+                    <button type="button" class="tab-button" data-mode="cards">Karten</button>
+                  </div>
+                </label>
+              </div>
 
-              <div class="button-row">
+              <div class="config-actions">
                 <button id="generateBtn">Ziffernfolge erstellen</button>
                 <button id="toggleBtn" class="secondary">Ausblenden</button>
                 <button id="resetBtn" class="ghost">Neu starten</button>
@@ -1206,10 +1231,10 @@
           </div>
           <div class="palace-list" id="palaceList"></div>
           <div class="palace-io">
-            <label>
-              Historie (Memorize-Ketten)
+            <div class="palace-io-block">
+              <div class="palace-io-title">Historie (Memorize-Ketten)</div>
               <div class="palace-list" id="historyList"></div>
-            </label>
+            </div>
             <label>
               Export / Import (JSON)
               <textarea id="palaceJson" placeholder='[{"room":"Wohnzimmer","place":"Sofa"}]'></textarea>
@@ -1307,7 +1332,7 @@
       let bestTimes = {};
       let palaceEntries = [];
       let palaceLastRoom = "";
-      let palaceOpen = false;
+      let palaceOpen = true;
       let supportEnabled = false;
       let assistOpen = false;
       let mobileUi = false;
